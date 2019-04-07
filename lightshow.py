@@ -51,7 +51,7 @@ def mainBeat():
         channels[x].on(0.25)
     return True
 
-player = Player( "/home/pi/lightshow/carol.mp3", endCb, syncCb )
+player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
 
 input( "Press Enter to quit" )
 player.stop()
