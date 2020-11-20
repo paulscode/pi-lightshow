@@ -97,7 +97,6 @@ def mainBeat():
     if mainFinished:
         return True
     mainCurrentBeat = mainCurrentBeat + 1
-    print( "M" + str( mainCurrentBeat ) )
     if( mainCurrentBeat < mainTotalBeats ):
         nextBeat = mainStart + ( mainCurrentBeat * mainTempo )
         position = player.position()
