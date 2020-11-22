@@ -1,10 +1,12 @@
 from RPi import GPIO
 from time import sleep
 from threading import Timer
-from random import randint
+from random import random
+from subprocess import Popen
 
 from player import Player
 from channel import Channel
+from button import Button
 
 preludeStart = 0.3494857143
 preludeTempo = 0.7365142857
@@ -22,13 +24,17 @@ channelPins = [17,27,22,13,19,26,21,20,16,12]
 channels = []
 for x in range(10):
     channels.append( Channel( channelPins[x] ) )
+flashTimers = []
 for x in range(10):
-    channels[x].off()
+    flashTimers.append( Timer( 0.1, channels[x].off ) )
 
 started = False
 preludeFinished = False
 mainFinished = False
 finished = False
+player = False
+lightMode = 0
+
 def syncCb( position ):
     global started, player, preludeStart, preludeBeat, mainStart, mainBeat
     if not started:
@@ -79,6 +85,9 @@ def preludeBeat():
     t.start()
         
     if( preludeCurrentBeat == 1 ):
+        # Make sure all channels are off
+        for x in range( 10 ):
+            channels[x].off()
         # First note is at the end of the first measure
         playNote( 5, preludeTempo * 0.5, preludeTempo * 0.5 )
     elif( ( preludeCurrentBeat % 2 ) == 0 ):
@@ -93,7 +102,7 @@ def preludeBeat():
     return True
 
 def mainBeat():
-    global mainFinished, mainBeat, player, mainStart, mainTempo, mainTotalBeats, mainCurrentBeat, channels
+    global mainFinished, mainBeat, player, mainStart, mainTempo, mainTotalBeats, mainCurrentBeat, channels, normalMode
     if mainFinished:
         return True
     mainCurrentBeat = mainCurrentBeat + 1
@@ -150,9 +159,12 @@ def mainBeat():
     if( mainCurrentBeat in [47, 51, 55, 59] ):
         # Descent, part 2
         playPhrase( 15, mainTempo )
-    if( mainCurrentBeat in [161, 162, 163, 164] ):
-        # Random notes
-        playPhrase( 15, mainTempo )
+    if( mainCurrentBeat == 161 ):
+        # Fast random flashing
+        flashLights( 3 )
+    if( mainCurrentBeat == 165 ):
+        # Turn off random flashing
+        flashLights( -1 )
     if( mainCurrentBeat in [149, 151, 153, 155] ):
         stepDown( mainTempo )
     if( mainCurrentBeat in [150, 152, 154, 156] ):
@@ -164,15 +176,6 @@ def playNote( channel, delay, duration ):
     global channels
     t = Timer( delay, channels[channel].on, [duration] )
     t.start()
-    return True
-
-def randomNotes( tempo ):
-    for x in range( 10 ):
-        if( x == 0 ):
-            channels[randint( 0, 9 )].on( tempo * 0.1 )
-        else:
-            t = Timer( tempo * 0.1 * float( x ), channels[randint( 0, 9 )].on, [tempo * 0.1] )
-            t1.start()
     return True
 
 def stepUp( tempo ):
@@ -430,8 +433,83 @@ def playPhrase( phrase, tempo ):
         
     return True
 
-player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
+def flashOff( x, mode ):
+    global flashTimers, channels
+    r = random()
+    if mode == 0:
+        flashOn( x, mode )
+    else:
+        if mode == 1:
+            scaler = 5.0
+        elif mode == 2:
+            scaler =  3.0
+        else:
+            scaler = 0.5
+        channels[x].off()
+        flashTimers[x] = Timer( r * scaler, flashOn, [x, mode] )
+        flashTimers[x].start()
+    return True
+    
+def flashOn( x, mode ):
+    global flashTimers, channels
+    r = random()
+    channels[x].on()
+    if mode != 0:
+        if mode == 1:
+            scaler = 5.0
+        elif mode == 2:
+            scaler =  3.0
+        else:
+            scaler = 0.5
+        flashTimers[x] = Timer( r * scaler, flashOff, [x, mode] )
+        flashTimers[x].start()
+    return True
+       
+def flashLights( mode ):
+    global channels, flashTimers
+    for x in range( 10 ):
+        flashTimers[x].cancel()
+        if mode > -1:
+            flashOff( x, mode )
+    return True
 
-input( "Press Enter to quit" )
-player.stop()
-GPIO.cleanup()
+def btncallback(index, state):
+    global player, lightMode, started, preludeFinished, mainFinished, finished, preludeCurrentBeat, mainCurrentBeat, channels
+    if state:
+        if lightMode == 4:
+            player.stop()
+        if index == 0:
+            flashLights( -1 )
+            GPIO.cleanup()
+            Popen( ['shutdown','-h','now'] )
+        elif index == 1:
+            lightMode = lightMode + 1
+            if lightMode > 3:
+                lightMode = 0
+            flashLights( lightMode )
+        elif index == 2:
+            flashLights( -1 )
+            started = False
+            preludeFinished = False
+            mainFinished = False
+            finished = False
+            preludeCurrentBeat = 0
+            mainCurrentBeat = 0
+            lightMode = 4
+            player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
+
+powerButton = Button(0, 25, btncallback)
+modeButton = Button(1, 24, btncallback)
+lightshowButton = Button(2, 23, btncallback)
+
+flashLights( lightMode )
+
+try:
+    while True:
+        sleep(1)
+        pass
+finally:
+    flashLights( -1 )
+    if lightMode == 4:
+        player.stop()
+    GPIO.cleanup()
