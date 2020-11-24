@@ -43,7 +43,7 @@ There are 10 channels for controlling the Christmas lights:
 ### Chanel 9) GPIO 16
 ### Chanel 10) GPIO 12
 
-Solid State Relays should be connected between the above listed GPIO pins and Ground.  The other end of the SSRs can switch the Line wire of 10 femail power cables.
+Solid State Relays should be connected between the above listed GPIO pins and Ground.  The other end of the SSRs can switch the Line wires of 10 femail power cables.
 
 The lights controlled by the 10 channels should be arranged in a way that follows the following order and groupings:
 
