@@ -5,9 +5,15 @@ This application is designed to run on a Raspberry Pi (tested on the 3B+) to con
 Depending on how the .mp3 was encoded, it may be necessary to adjust the following values near the top of lightshow.py:
 
 ### preludeStart = 0.3494857143
+    Time (in seconds) when the first note of the prelude begins
 ### preludeTempo = 0.7365142857
+    Time (in seconds) between each beat in the prelude
+    Calculate by subtracting timestamp of last beat (before tempo slows) from preludeStart and dividing by total beats
 ### mainStart = 33.078
+    Time (in seconds) when the first note of the main song begins
 ### mainTempo = 0.96616875
+    Time (in seconds) between each beat in the main song
+    Calculate by subtracting timestamp of last beat from start and dividing by total beats
 
 These values can be determined from any editor that visualizes the audio and displays timestamps, such as Audacity.
 
