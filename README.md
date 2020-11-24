@@ -51,3 +51,31 @@ The lights controlled by the 10 channels should be arranged in a way that follow
     |------| |---------| |-----| |-----|
 
 (TODO: will attach an example drawing in the future)
+
+Recommend running Raspbian Lite.  The following packages will need to be installed:
+(TODO: will add other prerequisite packages)
+
+    sudo su
+    cd ~
+    apt-get update
+    apt-get install omxplayer
+    apt-get install python-pip
+    pip install omxplayer-wrapper
+
+Can be set up to auto start on boot:
+
+    sudo nano /lib/systemd/system/lightshow.service
+
+And enter the following contents:
+
+    [Unit]
+      Description=Christmas Light Show
+      After=multi-user.target
+    
+    [Service]
+      Type=idle
+      WorkingDirectory=/home/pi/pi-lightshow
+      ExecStart=/usr/bin/python /home/pi/pi-lightshow/lightshow.py
+    
+    [Install]
+      WantedBy=multi-user.target
