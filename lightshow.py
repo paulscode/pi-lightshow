@@ -190,7 +190,7 @@ def stepUp( tempo ):
         if( x == 0 ):
             channels[order[x]].on( tempo )
         else:
-            t = Timer( tempo * 0.1 * float( x ), channels[order[x]].on, [tempo * (float(10 - x ) / 10.0)] )
+            t = Timer( tempo * 0.1 * float( x ), channels[order[x]].on )
             t.start()
     return True
 
@@ -198,7 +198,10 @@ def stepDown( tempo ):
     # turn off all lights in reverse order
     order = [0, 7, 4, 2, 3, 5, 6, 2, 8, 9]
     for x in range( 10 ):
-        channels[order[x]].on( tempo * 0.1 * (float( x ) + 1) )
+		if( x == 9 ):
+			channels[order[9]].on()
+		else:
+			channels[order[x]].on( tempo * 0.1 * (float( x ) + 1) )
     return True
 
 def playPhrase( phrase, tempo ):
