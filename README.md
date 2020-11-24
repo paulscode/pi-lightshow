@@ -1,3 +1,47 @@
 # pi-lightshow
 
-Just starting project.  Will update README and comment better in a future commit.
+This application is designed to run on a Raspberry Pi (tested on the 3B+) to control 10 channels of Christmas lights.  It operates in two modes: Music Lightshow, or Lights Patterns.  It is necessary to acquire a MP3 of the "Carol of the Bells" remix by the Trans-Siberian Orchestra and Metallica.  It should be named carol.mp3, and placed into the same folder as the source files.
+
+Depending on how the .mp3 was encoded, it may be necessary to adjust the following values near the top of lightshow.py:
+
+### preludeStart = 0.3494857143
+### preludeTempo = 0.7365142857
+### mainStart = 33.078
+### mainTempo = 0.96616875
+
+These values can be determined from any editor that visualizes the audio and displays timestamps, such as Audacity.
+
+There are three button inputs:
+
+### 1) Music Lightshow: Button between GPIO 23 and Ground
+     After music finishes playing, automatically returns to lights only mode
+### 2) Light Patterns: Button between GPIO 24 and Ground
+     Press the button to cycle between
+      - Always on
+      - Slow flash speed
+      - Medium flash speed
+      - Fast flash speed
+### 3) Power Off: Button between GPIO 25 and Ground
+     Press the button and wait for 30 seconds to fully shut dow before disconnecting from power
+
+There are 10 channels for controlling the Christmas lights:
+
+### Chanel 1) GPIO 17
+### Chanel 2) GPIO 27
+### Chanel 3) GPIO 22
+### Chanel 4) GPIO 13
+### Chanel 5) GPIO 19
+### Chanel 6) GPIO 26
+### Chanel 7) GPIO 21
+### Chanel 8) GPIO 20
+### Chanel 9) GPIO 16
+### Chanel 10) GPIO 12
+
+Solid State Relays should be connected between the above listed GPIO pins and Ground.  The other end of the SSRs can switch the Line wire of 10 femail power cables.
+
+The lights controlled by the 10 channels should be arranged in a way that follows the following order and groupings:
+
+     10   9   2   7   6   4   3   5   8   1
+    |------| |---------| |-----| |-----|
+
+(TODO: will attach an example drawing in the future)
