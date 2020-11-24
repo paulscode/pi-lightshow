@@ -33,7 +33,7 @@ preludeFinished = False
 mainFinished = False
 finished = False
 player = False
-lightMode = 0
+lightMode = 1
 
 def syncCb( position ):
     global started, player, preludeStart, preludeBeat, mainStart, mainBeat
@@ -46,9 +46,14 @@ def syncCb( position ):
         player.syncCallback = None
 
 def endCb():
-    preludeFinished = True;
-    mainFinished = True;
-    finished = True;
+    started = False
+    preludeFinished = True
+    mainFinished = True
+    finished = True
+    preludeCurrentBeat = 0
+    mainCurrentBeat = 0
+    lightMode = 1
+    flashLights( lightMode )
 
 def preludeBeat():
     global preludeFinished, preludeBeat, player, preludeStart, preludeTempo, preludeTotalBeats, preludeCurrentBeat, channels
