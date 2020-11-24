@@ -484,7 +484,7 @@ def flashLights( mode ):
 def btncallback(index, state):
     global player, lightMode, started, preludeFinished, mainFinished, finished, preludeCurrentBeat, mainCurrentBeat, channels
     if state:
-        if (lightMode == 4) && (player != False):
+        if (lightMode == 4) and (player != False):
             player.stop()
         if index == 0:
             flashLights( -1 )
