@@ -196,7 +196,7 @@ def stepUp( tempo ):
 
 def stepDown( tempo ):
     # turn off all lights in reverse order
-    order = [0, 7, 4, 2, 3, 5, 6, 2, 8, 9]
+    order = [0, 7, 4, 2, 3, 5, 6, 1, 8, 9]
     for x in range( 10 ):
         if( x == 9 ):
             channels[order[9]].on()
