@@ -52,6 +52,8 @@ The lights controlled by the 10 channels should be arranged in a way that follow
 
 (TODO: will attach an example drawing in the future)
 
+OPTIONALLY, the lightshow can be integrated with external automations via API.  To accomplish this, first create two web endpoints.  One endpoint should be for checking if there is a request, and it should output "1" if there is a request, or "0" otherwise.  The other endpoint should mark the request as done, and it should return "1" if successful, or "0" otherwise.  Enter the full URLs to the two endpoints into lightshow.py (see variables "integrationCheck" and "integrationDone").  Integration keys can be added as GET parameters for additional security.  (TODO: support keys in header)
+
 Recommend running Raspbian Lite.
 IMPORTANT NOTE: Support for OMX Player was discontinued in Raspbian Bullseye, so you must use legacy Raspbian Buster.
 (TODO: will update this repo to support latest Raspbian version)
@@ -71,7 +73,7 @@ From the terminal run the following commands:
     cd ~
     git clone https://github.com/paulscode/pi-lightshow
     cd pi-lightshow
-    pip install dbus-python omxplayer-wrapper pathlib
+    pip install dbus-python omxplayer-wrapper pathlib requests
 
 Then copy carol.mp3 into /home/pi/pi-lightshow/ (or wherever you downloaded the pi-lightshow repo)
 
