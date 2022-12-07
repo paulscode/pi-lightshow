@@ -71,7 +71,7 @@ From the terminal run the following commands:
     cd ~
     git clone https://github.com/paulscode/pi-lightshow
     cd pi-lightshow
-    pip install dbus-python omxplayer-wrapper
+    pip install dbus-python omxplayer-wrapper pathlib
 
 Then copy carol.mp3 into /home/pi/pi-lightshow/ (or wherever you downloaded the pi-lightshow repo)
 
