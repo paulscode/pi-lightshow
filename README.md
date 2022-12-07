@@ -52,21 +52,34 @@ The lights controlled by the 10 channels should be arranged in a way that follow
 
 (TODO: will attach an example drawing in the future)
 
-Recommend running Raspbian Lite.  The following packages will need to be installed:
-(TODO: will add other prerequisite packages)
+Recommend running Raspbian Lite.
+IMPORTANT NOTE: Support for OMX Player was discontinued in Raspbian Bullseye, so you must use legacy Raspbian Buster.
+(TODO: will update this repo to support latest Raspbian version)
 
-    sudo su
+Upgrade and install required packages:
+
+    sudo apt-get update
+    sudo apt-get upgrade
+    sudo apt-get install git libdbus-1-dev libglib2.0-dev omxplayer python-pip
+
+Reboot
+
+    sudo reboot
+
+From the terminal run the following commands:
+
     cd ~
-    apt-get update
-    apt-get install omxplayer
-    apt-get install python-pip
-    pip install omxplayer-wrapper
+    git clone https://github.com/paulscode/pi-lightshow
+    cd pi-lightshow
+    pip install dbus-python omxplayer-wrapper
 
-Can be set up to auto start on boot:
+Then copy carol.mp3 into /home/pi/pi-lightshow/ (or wherever you downloaded the pi-lightshow repo)
+
+The light show can be set up to auto start on boot:
 
     sudo nano /lib/systemd/system/lightshow.service
 
-And enter the following contents:
+And enter the following contents (adjust if you downloaded the pi-lightshow repo into a different directory):
 
     [Unit]
       Description=Christmas Light Show
