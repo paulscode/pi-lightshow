@@ -8,6 +8,11 @@ from player import Player
 from channel import Channel
 from button import Button
 
+import requests
+
+integrationCheck = ""
+integrationDone = ""
+
 preludeStart = 0.3494857143
 preludeTempo = 0.7365142857
 preludeTotalBeats = 37
@@ -36,12 +41,14 @@ player = False
 lightMode = 1
 
 def syncCb( position ):
-    global started, player, preludeStart, preludeBeat, mainStart, mainBeat
+    global started, player, preludeStart, preludeBeat, preludeTempo, preludeTotalBeats, mainStart, mainBeat, mainTempo, mainTotalBeats
     if not started:
         t1 = Timer( ( preludeStart - position ), preludeBeat )
         t2 = Timer( ( mainStart - position ), mainBeat )
+        t3 = Timer( ( preludeTempo * preludeTotalBeats ) + ( mainTempo * ( mainTotalBeats + 4 ) ), btncallback, [1, 1] )
         t1.start()
         t2.start()
+        t3.start()
         started = True
         player.syncCallback = None
 
@@ -515,6 +522,12 @@ flashLights( lightMode )
 try:
     while True:
         sleep(1)
+        if lightMode != 4:
+            if integrationCheck != "":
+                r = requests.get( integrationCheck )
+                if r.text == "1":
+                    request.get( integrationDone )
+                    btncallback( 2, 1 )
         pass
 finally:
     flashLights( -1 )
