@@ -526,7 +526,7 @@ try:
             if integrationCheck != "":
                 r = requests.get( integrationCheck )
                 if r.text == "1":
-                    request.get( integrationDone )
+                    requests.get( integrationDone )
                     btncallback( 2, 1 )
         pass
 finally:
