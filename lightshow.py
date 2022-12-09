@@ -53,6 +53,7 @@ def syncCb( position ):
         player.syncCallback = None
 
 def endCb():
+    global started, preludeFinished, mainFinished, finished, preludeCurrentBeat, mainCurrentBeat, lightMode
     started = False
     preludeFinished = True
     mainFinished = True
