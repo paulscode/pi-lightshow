@@ -89,6 +89,8 @@ And enter the following contents (adjust if you downloaded the pi-lightshow repo
     
     [Service]
       Type=idle
+      User=pi
+      Group=pi
       WorkingDirectory=/home/pi/pi-lightshow
       ExecStart=/usr/bin/python /home/pi/pi-lightshow/lightshow.py
     
