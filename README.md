@@ -94,3 +94,8 @@ And enter the following contents (adjust if you downloaded the pi-lightshow repo
     
     [Install]
       WantedBy=multi-user.target
+
+Then enable the new service and reboot:
+
+    sudo systemctl enable lightshow
+    sudo reboot
