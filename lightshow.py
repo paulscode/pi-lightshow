@@ -522,13 +522,21 @@ flashLights( lightMode )
 
 try:
     while True:
-        sleep(1)
+        sleep( 1 )
         if lightMode != 4:
             if integrationCheck != "":
-                r = requests.get( integrationCheck )
+                try:
+                    r = requests.get( integrationCheck )
+                except:
+                    print( "Problem connecting to check API" )
+                    sleep( 10 )
                 if r.text == "1":
-                    requests.get( integrationDone )
-                    btncallback( 2, 1 )
+                    try:
+                        requests.get( integrationDone )
+                        btncallback( 2, 1 )
+                    except:
+                        print( "Problem connecting to done API" )
+                        sleep( 10 )
         pass
 finally:
     flashLights( -1 )
