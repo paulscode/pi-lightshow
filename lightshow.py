@@ -530,13 +530,14 @@ try:
                 except:
                     print( "Problem connecting to check API" )
                     sleep( 10 )
-                if r.text == "1":
-                    try:
-                        requests.get( integrationDone )
-                        btncallback( 2, 1 )
-                    except:
-                        print( "Problem connecting to done API" )
-                        sleep( 10 )
+                if r:
+                    if r.text == "1":
+                        try:
+                            requests.get( integrationDone )
+                            btncallback( 2, 1 )
+                        except:
+                            print( "Problem connecting to done API" )
+                            sleep( 10 )
         pass
 finally:
     flashLights( -1 )
