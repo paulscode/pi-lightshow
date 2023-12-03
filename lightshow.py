@@ -527,10 +527,6 @@ try:
             if integrationCheck != "":
                 try:
                     r = requests.get( integrationCheck )
-                except:
-                    print( "Problem connecting to check API" )
-                    sleep( 10 )
-                if r:
                     if r.text == "1":
                         try:
                             requests.get( integrationDone )
@@ -538,6 +534,9 @@ try:
                         except:
                             print( "Problem connecting to done API" )
                             sleep( 10 )
+                except:
+                    print( "Problem connecting to check API" )
+                    sleep( 10 )
         pass
 finally:
     flashLights( -1 )
