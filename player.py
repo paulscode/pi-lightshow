@@ -5,13 +5,14 @@ from threading import Thread
 
 class Player:
     def __init__(self, path, endCallback = None, syncCallback = None):
+        self.player = False
         self.finished = False
         self.path = Path( path )
         self.syncCallback = syncCallback
         self.endCallback = endCallback
         self.musicThread = Thread( target = self.play )
         self.musicThread.start()
-    
+
     def play(self):
         self.player = OMXPlayer( self.path, args = "-o local" )
         self.player.exitEvent = self.exitEvent
@@ -21,22 +22,28 @@ class Player:
             if self.syncCallback and not self.finished:
                 self.syncCallback( self.player.position() )
         self.player.quit()
-    
+
     def stop(self):
-        self.player.quit()
-    
+        if self.player != False:
+            self.player.quit()
+
     def position(self):
-        return self.player.position()
-    
+        if self.player != False:
+            return self.player.position()
+        return -1
+
     def exitEvent(self, player, exit_status):
         self.finished = True
         if self.endCallback:
             self.endCallback()
-    
+
     def stopEvent(self, player):
         self.finished = True
         if self.endCallback:
             self.endCallback()
+
+
+
 
 
 """
@@ -46,7 +53,7 @@ def syncCb( position ):
 def endCb():
     print ("END")
 
-player = Player( "/home/pi/lightshow/carol.mp3", endCb, syncCb )
+player = Player( "/home/pi/lightshow/madrussian.mp3", endCb, syncCb )
 # player = Player( "/home/pi/lightshow/carol.mp3" )
 
 input( "Press Enter to quit" )

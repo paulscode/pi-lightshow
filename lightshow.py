@@ -39,6 +39,7 @@ mainFinished = False
 finished = False
 player = False
 lightMode = 1
+debounce = False
 
 def syncCb( position ):
     global started, player, preludeStart, preludeBeat, preludeTempo, preludeTotalBeats, mainStart, mainBeat, mainTempo, mainTotalBeats
@@ -96,7 +97,7 @@ def preludeBeat():
 
     t = Timer( delay, preludeBeat )
     t.start()
-        
+
     if( preludeCurrentBeat == 1 ):
         # Make sure all channels are off
         for x in range( 10 ):
@@ -182,7 +183,7 @@ def mainBeat():
         stepDown( mainTempo )
     if( mainCurrentBeat in [150, 152, 154, 156] ):
         stepUp( mainTempo )
-        
+
     return True
 
 def playNote( channel, delay, duration ):
@@ -446,7 +447,7 @@ def playPhrase( phrase, tempo ):
         t7.start()
         t8.start()
         t9.start()
-        
+
     return True
 
 def flashOff( x, mode ):
@@ -465,7 +466,7 @@ def flashOff( x, mode ):
         flashTimers[x] = Timer( r * scaler, flashOn, [x, mode] )
         flashTimers[x].start()
     return True
-    
+
 def flashOn( x, mode ):
     global flashTimers, channels
     r = random()
@@ -480,7 +481,7 @@ def flashOn( x, mode ):
         flashTimers[x] = Timer( r * scaler, flashOff, [x, mode] )
         flashTimers[x].start()
     return True
-       
+
 def flashLights( mode ):
     global channels, flashTimers
     for x in range( 10 ):
@@ -489,14 +490,23 @@ def flashLights( mode ):
             flashOff( x, mode )
     return True
 
+def debounced():
+    global debounce
+    debounce = False
+
 def btncallback(index, state):
-    global player, lightMode, started, preludeFinished, mainFinished, finished, preludeCurrentBeat, mainCurrentBeat, channels
-    if state:
+    global player, lightMode, started, preludeFinished, mainFinished, finished, preludeCurrentBeat, mainCurrentBeat, channels, debounce
+    if state and (debounce == False):
+        debounce = True
+        bounceCooldown = Timer( 0.5, debounced )
+        bounceCooldown.start()
+
         if (lightMode == 4) and (player != False):
             player.stop()
         if index == 0:
             flashLights( -1 )
             GPIO.cleanup()
+            print( "Calling shutdown" )
             Popen( ['shutdown','-h','now'] )
         elif index == 1:
             lightMode = lightMode + 1
@@ -543,3 +553,4 @@ finally:
     if lightMode == 4:
         player.stop()
     GPIO.cleanup()
+
