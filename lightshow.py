@@ -18,10 +18,11 @@ preludeTempo = 0.7365142857
 preludeTotalBeats = 37
 preludeCurrentBeat = 0
 
-madPreludeStarts = [0.7, 5.692, 10.728, 15.877, 20.898, 25.902, 30.824, 39.288, 44.251, 49.122]
-madPreludeTempos = [0.624, 0.6295, 0.643625, 0.627625, 0.6255, 0.61525, 0.604571429, 0.620375, 0.608875, 0.590625]
-madPreludeTotalBeats = [8, 8, 8, 8, 8, 8, 14, 8, 8, 16]
+madPreludeStarts = [0.7, 5.692, 10.728, 15.877, 20.898, 25.902, 30.824, 39.288, 44.251, 49.122, 58.572, 61.608, 62.865, 64.153, 65.744, 66.523, 67.374, 68.317, 69.418, 70.926]
+madPreludeTempos = [0.624, 0.6295, 0.643625, 0.627625, 0.6255, 0.61525, 0.604571429, 0.620375, 0.608875, 0.590625, 0.6072, 0.6285, 0.644, 0.7955, 0.779, 0.851, 0.943, 1.101, 1.508, 3.094]
+madPreludeTotalBeats = [8, 8, 8, 8, 8, 8, 14, 8, 8, 16, 5, 2, 2, 2, 1, 1, 1, 1, 1, 1]
 madPreludeCurrentBeat = 0
+madPreludeCount = 20
 
 mainStart = 33.078
 mainTempo = 0.96616875
@@ -129,7 +130,7 @@ def preludeBeat():
     return True
 
 def madPreludeBeat( index ):
-    global madPreludeFinished, madPreludeBeat, player, madPreludeStarts, madPreludeTempos, madPreludeTotalBeats, madPreludeCurrentBeat, channels
+    global madPreludeFinished, madPreludeBeat, player, madPreludeStarts, madPreludeTempos, madPreludeTotalBeats, madPreludeCurrentBeat, madPreludeCount, channels
     if madPreludeFinished:
         return True
     nextIndex = index
@@ -149,7 +150,7 @@ def madPreludeBeat( index ):
 
     if( madPreludeCurrentBeat >= madPreludeTotalBeats[index] ):
         print( "End of phrase" )
-        if( nextIndex >= 9 ):
+        if( nextIndex >= ( madPreludeCount - 1 ) ):
             print( "\nLAST BEAT\n" )
             madPreludeFinished = True
         else:
