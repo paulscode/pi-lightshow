@@ -18,6 +18,11 @@ preludeTempo = 0.7365142857
 preludeTotalBeats = 37
 preludeCurrentBeat = 0
 
+madPreludeStarts = [0.7, 5.692, 10.728, 15.877, 20.898, 25.902, 30.824, 39.288, 44.251, 49.122]
+madPreludeTempos = [0.624, 0.6295, 0.643625, 0.627625, 0.6255, 0.61525, 0.604571429, 0.620375, 0.608875, 0.590625]
+madPreludeTotalBeats = [8, 8, 8, 8, 8, 8, 14, 8, 8, 16]
+madPreludeCurrentBeat = 0
+
 mainStart = 33.078
 mainTempo = 0.96616875
 mainTotalBeats = 175
@@ -35,31 +40,39 @@ for x in range(10):
 
 started = False
 preludeFinished = False
+madPreludeFinished = False
 mainFinished = False
 finished = False
 player = False
 lightMode = 1
 debounce = False
+activeSong = 0
 
 def syncCb( position ):
-    global started, player, preludeStart, preludeBeat, preludeTempo, preludeTotalBeats, mainStart, mainBeat, mainTempo, mainTotalBeats
+    global started, player, preludeStart, russianPreludeStart, preludeBeat, russianPreludeBeat, preludeTempo, russianPreludeTempo, preludeTotalBeats, russianPreludeTotalBeats, mainStart, mainBeat, mainTempo, mainTotalBeats
     if not started:
-        t1 = Timer( ( preludeStart - position ), preludeBeat )
-        t2 = Timer( ( mainStart - position ), mainBeat )
-        t3 = Timer( ( preludeTempo * preludeTotalBeats ) + ( mainTempo * ( mainTotalBeats + 4 ) ), btncallback, [1, 1] )
-        t1.start()
-        t2.start()
-        t3.start()
+        if activeSong == 0:
+            t1 = Timer( ( preludeStart - position ), preludeBeat )
+            t2 = Timer( ( mainStart - position ), mainBeat )
+            t3 = Timer( ( preludeTempo * preludeTotalBeats ) + ( mainTempo * ( mainTotalBeats + 4 ) ), btncallback, [1, 1] )
+            t1.start()
+            t2.start()
+            t3.start()
+        else:
+            t1 = Timer( ( madPreludeStarts[0] - position ), madPreludeBeat, [0] )
+            t1.start()
         started = True
         player.syncCallback = None
 
 def endCb():
-    global started, preludeFinished, mainFinished, finished, preludeCurrentBeat, mainCurrentBeat, lightMode
+    global started, preludeFinished, madPreludeFinished, mainFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, lightMode
     started = False
     preludeFinished = True
+    madPreludeFinished = True
     mainFinished = True
     finished = True
     preludeCurrentBeat = 0
+    madPreludeCurrentBeat = 0
     mainCurrentBeat = 0
     lightMode = 1
     flashLights( lightMode )
@@ -114,6 +127,37 @@ def preludeBeat():
         # "Let nothing you dismay" is played by itself only once
         playPhrase( 2, preludeTempo )
     return True
+
+def madPreludeBeat( index ):
+    global madPreludeFinished, madPreludeBeat, player, madPreludeStarts, madPreludeTempos, madPreludeTotalBeats, madPreludeCurrentBeat, channels
+    if madPreludeFinished:
+        return True
+    nextIndex = index
+    madPreludeCurrentBeat = madPreludeCurrentBeat + 1
+    nextBeat = madPreludeStarts[ index ] + ( madPreludeCurrentBeat * madPreludeTempos[ index ] )
+    position = player.position()
+    delay = nextBeat - position
+    if( delay < 0 ):
+        delay = 0
+
+    if( index == 0 and madPreludeCurrentBeat == 1 ):
+        # Make sure all channels are off
+        for x in range( 10 ):
+            channels[x].off()
+    for x in range( 10 ):
+        channels[x].on( madPreludeTempos[ index ] * 0.33 )
+
+    if( madPreludeCurrentBeat >= madPreludeTotalBeats[index] ):
+        print( "End of phrase" )
+        if( nextIndex >= 9 ):
+            print( "\nLAST BEAT\n" )
+            madPreludeFinished = True
+        else:
+            nextIndex = index + 1
+            madPreludeCurrentBeat = 0
+
+    t = Timer( delay, madPreludeBeat, [ nextIndex ] )
+    t.start()
 
 def mainBeat():
     global mainFinished, mainBeat, player, mainStart, mainTempo, mainTotalBeats, mainCurrentBeat, channels, normalMode
@@ -528,7 +572,23 @@ powerButton = Button(0, 25, btncallback)
 modeButton = Button(1, 24, btncallback)
 lightshowButton = Button(2, 23, btncallback)
 
+# #### TODO: Change back to this: ####
+"""
 flashLights( lightMode )
+"""
+sleep( 2 )
+started = False
+preludeFinished = False
+madPreludeFinished = False
+mainFinished = False
+finished = False
+preludeCurrentBeat = 0
+madPreludeCurrentBeat = 0
+mainCurrentBeat = 0
+lightMode = 4
+activeSong = 1
+player = Player( "/home/pi/pi-lightshow/madrussian.mp3", endCb, syncCb )
+# #### End ####
 
 try:
     while True:
