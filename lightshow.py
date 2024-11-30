@@ -29,6 +29,19 @@ mainTempo = 0.96616875
 mainTotalBeats = 175
 mainCurrentBeat = 0
 
+madMainStarts = [74.188, 99.173, 126.745, 140.644, 178.458, 192.235, 199.348, 206.583, 208.048, 209.684, 211.558, 213.841]
+madMainTempos = [0.446160714, 0.861625, 0.8686875, 0.859409091, 0.8610625, 0.4445625, 0.4521875, 0.488333333, 0.545333333, 0.624666667, 0.761, 1.127]
+madMainTotalBeats = [56, 32, 16, 44, 16, 16, 16, 3, 3, 3, 3, 3]
+madMainCurrentBeat = 0
+madMainCount = 12
+
+madFinaleStarts = [217.222]
+madFinaleTempos = [0.447144928]
+madFinaleTotalBeats = [138]
+madFinaleCurrentBeat = 0
+madFinaleCount = 1
+
+
 GPIO.setmode( GPIO.BCM )
 
 channelPins = [17,27,22,13,19,26,21,20,16,12]
@@ -43,6 +56,8 @@ started = False
 preludeFinished = False
 madPreludeFinished = False
 mainFinished = False
+madMainFinished = False
+madFinaleFinished = False
 finished = False
 player = False
 lightMode = 1
@@ -50,31 +65,37 @@ debounce = False
 activeSong = 0
 
 def syncCb( position ):
-    global started, player, preludeStart, russianPreludeStart, preludeBeat, russianPreludeBeat, preludeTempo, russianPreludeTempo, preludeTotalBeats, russianPreludeTotalBeats, mainStart, mainBeat, mainTempo, mainTotalBeats
+    global started, player, preludeStart, madPreludeStarts, preludeBeat, madPreludeBeat, preludeTempo, madPreludeTempos, preludeTotalBeats, madPreludeTotalBeats, mainStart, madMainStarts, mainBeat, madMainBeat, mainTempo, madMainTempos, mainTotalBeats, madMainTotalBeats
     if not started:
         if activeSong == 0:
             t1 = Timer( ( preludeStart - position ), preludeBeat )
             t2 = Timer( ( mainStart - position ), mainBeat )
-            t3 = Timer( ( preludeTempo * preludeTotalBeats ) + ( mainTempo * ( mainTotalBeats + 4 ) ), btncallback, [1, 1] )
+            t1.start()
+            t2.start()
+        else:
+            t1 = Timer( ( madPreludeStarts[0] - position ), madPreludeBeat, [0] )
+            t2 = Timer( ( madMainStarts[0] - position ), madMainBeat, [0] )
+            t3 = Timer( ( madFinaleStarts[0] - position ), madFinaleBeat, [0] )
             t1.start()
             t2.start()
             t3.start()
-        else:
-            t1 = Timer( ( madPreludeStarts[0] - position ), madPreludeBeat, [0] )
-            t1.start()
         started = True
         player.syncCallback = None
 
 def endCb():
-    global started, preludeFinished, madPreludeFinished, mainFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, lightMode
+    global started, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, madMainCurrentBeat, madFinaleCurrentBeat, lightMode
     started = False
     preludeFinished = True
     madPreludeFinished = True
     mainFinished = True
+    madMainFinished = True
+    madFinaleFinished = True
     finished = True
     preludeCurrentBeat = 0
     madPreludeCurrentBeat = 0
     mainCurrentBeat = 0
+    madMainCurrentBeat = 0
+    madFinaleCurrentBeat = 0
     lightMode = 1
     flashLights( lightMode )
 
@@ -149,9 +170,7 @@ def madPreludeBeat( index ):
         channels[x].on( madPreludeTempos[ index ] * 0.33 )
 
     if( madPreludeCurrentBeat >= madPreludeTotalBeats[index] ):
-        print( "End of phrase" )
         if( nextIndex >= ( madPreludeCount - 1 ) ):
-            print( "\nLAST BEAT\n" )
             madPreludeFinished = True
         else:
             nextIndex = index + 1
@@ -159,6 +178,7 @@ def madPreludeBeat( index ):
 
     t = Timer( delay, madPreludeBeat, [ nextIndex ] )
     t.start()
+    return True
 
 def mainBeat():
     global mainFinished, mainBeat, player, mainStart, mainTempo, mainTotalBeats, mainCurrentBeat, channels, normalMode
@@ -229,6 +249,59 @@ def mainBeat():
     if( mainCurrentBeat in [150, 152, 154, 156] ):
         stepUp( mainTempo )
 
+    return True
+
+def madMainBeat( index ):
+    global madMainFinished, madMainBeat, player, madMainStarts, madMainTempos, madMainTotalBeats, madMainCurrentBeat, channels
+    if madMainFinished:
+        return True
+    nextIndex = index
+    madMainCurrentBeat = madMainCurrentBeat + 1
+    nextBeat = madMainStarts[ index ] + ( madMainCurrentBeat * madMainTempos[ index ] )
+    position = player.position()
+    delay = nextBeat - position
+    if( delay < 0 ):
+        delay = 0
+
+    for x in range( 10 ):
+        channels[x].on( madMainTempos[ index ] * 0.33 )
+
+    if( madMainCurrentBeat >= madMainTotalBeats[index] ):
+        if( nextIndex >= ( madMainCount - 1 ) ):
+            madMainFinished = True
+        else:
+            nextIndex = index + 1
+            madMainCurrentBeat = 0
+
+    t = Timer( delay, madMainBeat, [ nextIndex ] )
+    t.start()
+    return True
+
+def madFinaleBeat( index ):
+    global madFinaleFinished, madFinaleBeat, player, madFinaleStarts, madFinaleTempos, madFinaleTotalBeats, madFinaleCurrentBeat, channels, btncallback
+    if madFinaleFinished:
+        t = Timer( madFinaleTempos[ madFinaleCount - 1 ] * 4, btncallback, [1, 1] )
+        return True
+    nextIndex = index
+    madFinaleCurrentBeat = madFinaleCurrentBeat + 1
+    nextBeat = madFinaleStarts[ index ] + ( madFinaleCurrentBeat * madFinaleTempos[ index ] )
+    position = player.position()
+    delay = nextBeat - position
+    if( delay < 0 ):
+        delay = 0
+
+    for x in range( 10 ):
+        channels[x].on( madFinaleTempos[ index ] * 0.33 )
+
+    if( madFinaleCurrentBeat >= madFinaleTotalBeats[index] ):
+        if( nextIndex >= ( madFinaleCount - 1 ) ):
+            madFinaleFinished = True
+        else:
+            nextIndex = index + 1
+            madFinaleCurrentBeat = 0
+
+    t = Timer( delay, madFinaleBeat, [ nextIndex ] )
+    t.start()
     return True
 
 def playNote( channel, delay, duration ):
@@ -582,10 +655,12 @@ started = False
 preludeFinished = False
 madPreludeFinished = False
 mainFinished = False
+madMainFinished = False
 finished = False
 preludeCurrentBeat = 0
 madPreludeCurrentBeat = 0
 mainCurrentBeat = 0
+madMainCurrentBeat = 0
 lightMode = 4
 activeSong = 1
 player = Player( "/home/pi/pi-lightshow/madrussian.mp3", endCb, syncCb )
