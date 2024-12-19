@@ -10,8 +10,8 @@ from button import Button
 
 import requests
 
-integrationCheck = ""
-integrationDone = ""
+integrationCheck = "https://paulscode.com/api/moms-lightshow/check"
+integrationDone = "https://paulscode.com/api/moms-lightshow/done?key=NOT_VERY_SECRET"
 
 preludeStart = 0.3494857143
 preludeTempo = 0.7365142857
@@ -41,7 +41,6 @@ madFinaleTotalBeats = [138]
 madFinaleCurrentBeat = 0
 madFinaleCount = 1
 
-
 GPIO.setmode( GPIO.BCM )
 
 channelPins = [17,27,22,13,19,26,21,20,16,12]
@@ -51,6 +50,12 @@ for x in range(10):
 flashTimers = []
 for x in range(10):
     flashTimers.append( Timer( 0.1, channels[x].off ) )
+
+def noop():
+    pass
+songTimers = []
+for x in range(3):
+    songTimers.append( Timer( 0, noop ) )
 
 started = False
 preludeFinished = False
@@ -65,7 +70,7 @@ debounce = False
 activeSong = 0
 
 def syncCb( position ):
-    global started, player, preludeStart, madPreludeStarts, preludeBeat, madPreludeBeat, preludeTempo, madPreludeTempos, preludeTotalBeats, madPreludeTotalBeats, mainStart, madMainStarts, mainBeat, madMainBeat, mainTempo, madMainTempos, mainTotalBeats, madMainTotalBeats, activeSong
+    global started, player, preludeStart, madPreludeStarts, preludeBeat, madPreludeBeat, preludeTempo, madPreludeTempos, mainStart, madMainStarts, mainBeat, madMainBeat, madFinaleStarts, madFinaleBeat, activeSong, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, songTimers
     if not started:
         preludeFinished = False
         madPreludeFinished = False
@@ -74,26 +79,22 @@ def syncCb( position ):
         madFinaleFinished = False
         finished = False
         if activeSong == 0:
-            t1 = Timer( ( preludeStart - position ), preludeBeat )
-            t2 = Timer( ( mainStart - position ), mainBeat )
-            t1.start()
-            t2.start()
-            activeSong = 1
+            songTimers[0] = Timer( ( preludeStart - position ), preludeBeat )
+            songTimers[1] = Timer( ( mainStart - position ), mainBeat )
+            songTimers[0].start()
+            songTimers[1].start()
         elif activeSong == 1:
-            t1 = Timer( ( madPreludeStarts[0] - position ), madPreludeBeat, [0] )
-            t2 = Timer( ( madMainStarts[0] - position ), madMainBeat, [0] )
-            t3 = Timer( ( madFinaleStarts[0] - position ), madFinaleBeat, [0] )
-            t1.start()
-            t2.start()
-            t3.start()
-            activeSong = 0
+            songTimers[0] = Timer( ( madPreludeStarts[0] - position ), madPreludeBeat, [0] )
+            songTimers[1] = Timer( ( madMainStarts[0] - position ), madMainBeat, [0] )
+            songTimers[2] = Timer( ( madFinaleStarts[0] - position ), madFinaleBeat, [0] )
+            songTimers[0].start()
+            songTimers[1].start()
+            songTimers[2].start()
         started = True
         player.syncCallback = None
 
 def endCb():
-    return
-"""
-    global started, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, madMainCurrentBeat, madFinaleCurrentBeat, lightMode
+    global syncCb, endCb, started, player, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, madMainCurrentBeat, madFinaleCurrentBeat, lightMode, activeSong, songTimers
     started = False
     preludeFinished = True
     madPreludeFinished = True
@@ -106,9 +107,29 @@ def endCb():
     mainCurrentBeat = 0
     madMainCurrentBeat = 0
     madFinaleCurrentBeat = 0
-    lightMode = 1
-    flashLights( lightMode )
-"""
+    for x in range(3):
+        songTimers[x].cancel()
+    sleep( 1 )
+
+    if lightMode == 4:
+        activeSong = activeSong + 1
+        if activeSong == 0:
+            print( "Starting song: " + str(activeSong) )
+            player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
+        elif activeSong == 1:
+            print( "Starting song: " + str(activeSong) )
+            player = Player( "/home/pi/pi-lightshow/madrussian.mp3", endCb, syncCb )
+        else:
+            activeSong = 0
+            player = False
+            lightMode = 1
+            print( "Activating light mode: " + str(lightMode) )
+            flashLights( lightMode )
+    else:
+        print( "Activating light mode: " + str(lightMode) )
+        activeSong = 0
+        player = False
+        flashLights( lightMode )
 
 def preludeBeat():
     global preludeFinished, preludeBeat, player, preludeStart, preludeTempo, preludeTotalBeats, preludeCurrentBeat, channels
@@ -194,9 +215,6 @@ def madPreludeBeat( index ):
 def mainBeat():
     global mainFinished, mainBeat, player, mainStart, mainTempo, mainTotalBeats, mainCurrentBeat, channels, normalMode
     if mainFinished:
-        # Advance to next song
-        t = Timer( mainTempo * 4, btncallback, [2, 1] )
-        t.start()
         return True
     mainCurrentBeat = mainCurrentBeat + 1
     if( mainCurrentBeat >= mainTotalBeats ):
@@ -293,9 +311,6 @@ def madMainBeat( index ):
 def madFinaleBeat( index ):
     global madFinaleFinished, madFinaleBeat, player, madFinaleStarts, madFinaleTempos, madFinaleTotalBeats, madFinaleCurrentBeat, channels, btncallback, lightMode
     if madFinaleFinished:
-        lightMode = 1
-        t = Timer( madFinaleTempos[ madFinaleCount - 1 ] * 4, btncallback, [1, 1] )
-        t.start()
         return True
     nextIndex = index
     madFinaleCurrentBeat = madFinaleCurrentBeat + 1
@@ -628,53 +643,45 @@ def debounced():
     debounce = False
 
 def btncallback(index, state):
-    global player, lightMode, started, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, madMainCurrentBeat, madFinaleCurrentBeat, channels, debounce, activeSong
+    global syncCb, endCb, debounced, flashLights, player, lightMode, channels, debounce, activeSong
     if state and (debounce == False):
         debounce = True
         bounceCooldown = Timer( 0.5, debounced )
         bounceCooldown.start()
+        previousLightMode = lightMode
+        wasPlaying = False
+        if (previousLightMode == 4) and (player != False):
+            wasPlaying = True
 
-        if (lightMode == 4) and (player != False):
+        if index == 1:
+            if wasPlaying:
+                lightMode = 1
+            else:
+                lightMode = lightMode + 1
+                if lightMode > 3:
+                    lightMode = 0
+        elif index == 2:
+            lightMode = 4
+
+        if (previousLightMode == 4) and (player != False):
+            print( "Stopping player." )
             player.stop()
+            sleep( 2 )
+
         if index == 0:
+            print( "Shutting down." )
             flashLights( -1 )
             GPIO.cleanup()
-            print( "Calling shutdown" )
             Popen( ['shutdown','-h','now'] )
-        elif index == 1:
-            lightMode = lightMode + 1
-            if lightMode > 3:
-                lightMode = 0
-            flashLights( lightMode )
+        elif (index == 1) and (previousLightMode != 4):
+                print( "Activating light mode: " + str(lightMode) )
+                flashLights( lightMode )
         elif index == 2:
-            if activeSong == 0:
+            if wasPlaying == False:
                 flashLights( -1 )
-                started = False
-                preludeFinished = False
-                madPreludeFinished = False
-                mainFinished = False
-                madMainFinished = False
-                finished = False
-                preludeCurrentBeat = 0
-                madPreludeCurrentBeat = 0
-                mainCurrentBeat = 0
-                madMainCurrentBeat = 0
-                lightMode = 4
+                activeSong = 0
+                print( "Starting song: " + str(activeSong) )
                 player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
-            elif activeSong == 1:
-                flashLights( -1 )
-                started = False
-                preludeFinished = False
-                madPreludeFinished = False
-                mainFinished = False
-                madMainFinished = False
-                finished = False
-                preludeCurrentBeat = 0
-                madPreludeCurrentBeat = 0
-                mainCurrentBeat = 0
-                madMainCurrentBeat = 0
-                lightMode = 4
-                player = Player( "/home/pi/pi-lightshow/madrussian.mp3", endCb, syncCb )
 
 
 powerButton = Button(0, 25, btncallback)
