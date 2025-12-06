@@ -1,716 +1,519 @@
-from RPi import GPIO
+#!/usr/bin/env python3
+"""
+Pi Lightshow Main Application
+
+Christmas lightshow controller using JSON-based song definitions and hardware abstraction.
+Supports both Raspberry Pi GPIO control and GUI simulation for development.
+"""
+
+import sys
+import os
 from time import sleep
 from threading import Timer
 from random import random
 from subprocess import Popen
+from typing import Optional
+import argparse
 
-from player import Player
-from channel import Channel
-from button import Button
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-import requests
+from song_loader import SongLoader, SongInterpreter
+from hardware.channel_interface import (
+    create_channels, create_buttons, setup_gpio, cleanup_gpio
+)
+from player_interface import create_player
+from simulator.gui_simulator import LightshowSimulator
 
-integrationCheck = "https://paulscode.com/api/moms-lightshow/check"
-integrationDone = "https://paulscode.com/api/moms-lightshow/done?key=NOT_VERY_SECRET"
 
-preludeStart = 0.3494857143
-preludeTempo = 0.7365142857
-preludeTotalBeats = 37
-preludeCurrentBeat = 0
-
-madPreludeStarts = [0.7, 5.692, 10.728, 15.877, 20.898, 25.902, 30.824, 39.288, 44.251, 49.122, 58.572, 61.608, 62.865, 64.153, 65.744, 66.523, 67.374, 68.317, 69.418, 70.926]
-madPreludeTempos = [0.624, 0.6295, 0.643625, 0.627625, 0.6255, 0.61525, 0.604571429, 0.620375, 0.608875, 0.590625, 0.6072, 0.6285, 0.644, 0.7955, 0.779, 0.851, 0.943, 1.101, 1.508, 3.094]
-madPreludeTotalBeats = [8, 8, 8, 8, 8, 8, 14, 8, 8, 16, 5, 2, 2, 2, 1, 1, 1, 1, 1, 1]
-madPreludeCurrentBeat = 0
-madPreludeCount = 20
-
-mainStart = 33.078
-mainTempo = 0.96616875
-mainTotalBeats = 175
-mainCurrentBeat = 0
-
-madMainStarts = [74.188, 99.173, 126.745, 140.644, 178.458, 192.235, 199.348, 206.583, 208.048, 209.684, 211.558, 213.841]
-madMainTempos = [0.446160714, 0.861625, 0.8686875, 0.859409091, 0.8610625, 0.4445625, 0.4521875, 0.488333333, 0.545333333, 0.624666667, 0.761, 1.127]
-madMainTotalBeats = [56, 32, 16, 44, 16, 16, 16, 3, 3, 3, 3, 3]
-madMainCurrentBeat = 0
-madMainCount = 12
-
-madFinaleStarts = [217.222]
-madFinaleTempos = [0.447144928]
-madFinaleTotalBeats = [138]
-madFinaleCurrentBeat = 0
-madFinaleCount = 1
-
-GPIO.setmode( GPIO.BCM )
-
-channelPins = [17,27,22,13,19,26,21,20,16,12]
-channels = []
-for x in range(10):
-    channels.append( Channel( channelPins[x] ) )
-flashTimers = []
-for x in range(10):
-    flashTimers.append( Timer( 0.1, channels[x].off ) )
-
-def noop():
-    pass
-songTimers = []
-for x in range(3):
-    songTimers.append( Timer( 0, noop ) )
-
-started = False
-preludeFinished = False
-madPreludeFinished = False
-mainFinished = False
-madMainFinished = False
-madFinaleFinished = False
-finished = False
-player = False
-lightMode = 1
-debounce = False
-activeSong = 0
-
-def syncCb( position ):
-    global started, player, preludeStart, madPreludeStarts, preludeBeat, madPreludeBeat, preludeTempo, madPreludeTempos, mainStart, madMainStarts, mainBeat, madMainBeat, madFinaleStarts, madFinaleBeat, activeSong, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, songTimers
-    if not started:
-        preludeFinished = False
-        madPreludeFinished = False
-        mainFinished = False
-        madMainFinished = False
-        madFinaleFinished = False
-        finished = False
-        if activeSong == 0:
-            songTimers[0] = Timer( ( preludeStart - position ), preludeBeat )
-            songTimers[1] = Timer( ( mainStart - position ), mainBeat )
-            songTimers[0].start()
-            songTimers[1].start()
-        elif activeSong == 1:
-            songTimers[0] = Timer( ( madPreludeStarts[0] - position ), madPreludeBeat, [0] )
-            songTimers[1] = Timer( ( madMainStarts[0] - position ), madMainBeat, [0] )
-            songTimers[2] = Timer( ( madFinaleStarts[0] - position ), madFinaleBeat, [0] )
-            songTimers[0].start()
-            songTimers[1].start()
-            songTimers[2].start()
-        started = True
-        player.syncCallback = None
-
-def endCb():
-    global syncCb, endCb, started, player, preludeFinished, madPreludeFinished, mainFinished, madMainFinished, madFinaleFinished, finished, preludeCurrentBeat, madPreludeCurrentBeat, mainCurrentBeat, madMainCurrentBeat, madFinaleCurrentBeat, lightMode, activeSong, songTimers
-    started = False
-    preludeFinished = True
-    madPreludeFinished = True
-    mainFinished = True
-    madMainFinished = True
-    madFinaleFinished = True
-    finished = True
-    preludeCurrentBeat = 0
-    madPreludeCurrentBeat = 0
-    mainCurrentBeat = 0
-    madMainCurrentBeat = 0
-    madFinaleCurrentBeat = 0
-    for x in range(3):
-        songTimers[x].cancel()
-    sleep( 1 )
-
-    if lightMode == 4:
-        activeSong = activeSong + 1
-        if activeSong == 0:
-            print( "Starting song: " + str(activeSong) )
-            player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
-        elif activeSong == 1:
-            print( "Starting song: " + str(activeSong) )
-            player = Player( "/home/pi/pi-lightshow/madrussian.mp3", endCb, syncCb )
-        else:
-            activeSong = 0
-            player = False
-            lightMode = 1
-            print( "Activating light mode: " + str(lightMode) )
-            flashLights( lightMode )
-    else:
-        print( "Activating light mode: " + str(lightMode) )
-        activeSong = 0
-        player = False
-        flashLights( lightMode )
-
-def preludeBeat():
-    global preludeFinished, preludeBeat, player, preludeStart, preludeTempo, preludeTotalBeats, preludeCurrentBeat, channels
-    if preludeFinished:
-        return True
-    preludeCurrentBeat = preludeCurrentBeat + 1
-    nextBeat = preludeStart + ( preludeCurrentBeat * preludeTempo )
-    position = player.position()
-    delay = nextBeat - position
-    if( delay < 0 ):
-        delay = 0
-    if( preludeCurrentBeat == preludeTotalBeats - 2 ):
-        # Final "God rest ye mer.." starting at normal tempo
-        playNote( 3, preludeTempo * 0.5, preludeTempo * 0.33 )
-        playNote( 2, preludeTempo, preludeTempo * 0.33 )
-        playNote( 0, preludeTempo * 1.5, preludeTempo * 0.33 )
-        playNote( 0, preludeTempo * 2, preludeTempo * 0.33 )
-    elif( preludeCurrentBeat >= preludeTotalBeats ):
-        preludeFinished = True
-        # Last three measures of prelude are at a slowing tempo
-        playNote( 5, 0.478, 0.351 )
-        playNote( 6, 0.829, 0.518 )
-        playNote( 1, 1.347, 0.569 )
-        playNote( 6, 1.916, 0.62 )
-        playNote( 5, 2.536, 2.5 )
-        # Slowing down: "..ry gentlemen let"
-        playNote( 2, 0.478, 0.351 )
-        playNote( 3, 0.829, 0.518 )
-        playNote( 7, 1.347, 0.569 )
-        playNote( 4, 1.916, 0.5 )
-        playNote( 4, 2.536, 2.5 )
-
-    t = Timer( delay, preludeBeat )
-    t.start()
-
-    if( preludeCurrentBeat == 1 ):
-        # Make sure all channels are off
-        for x in range( 10 ):
-            channels[x].off()
-        # First note is at the end of the first measure
-        playNote( 5, preludeTempo * 0.5, preludeTempo * 0.5 )
-    elif( ( preludeCurrentBeat % 2 ) == 0 ):
-        # Background phrase repeats every two measures
-        playPhrase( 0, preludeTempo )
-    if( preludeCurrentBeat in [9, 23, 27, 31] ):
-        # "God rest ye merry gentlemen" repeats four times
-        playPhrase( 1, preludeTempo )
-    if( preludeCurrentBeat == 13 ):
-        # "Let nothing you dismay" is played by itself only once
-        playPhrase( 2, preludeTempo )
-    return True
-
-def madPreludeBeat( index ):
-    global madPreludeFinished, madPreludeBeat, player, madPreludeStarts, madPreludeTempos, madPreludeTotalBeats, madPreludeCurrentBeat, madPreludeCount, channels
-    if madPreludeFinished:
-        return True
-    nextIndex = index
-    madPreludeCurrentBeat = madPreludeCurrentBeat + 1
-    nextBeat = madPreludeStarts[ index ] + ( madPreludeCurrentBeat * madPreludeTempos[ index ] )
-    position = player.position()
-    delay = nextBeat - position
-    if( delay < 0 ):
-        delay = 0
-
-    if( index == 0 and madPreludeCurrentBeat == 1 ):
-        # Make sure all channels are off
-        for x in range( 10 ):
-            channels[x].off()
-    for x in range( 10 ):
-        channels[x].on( madPreludeTempos[ index ] * 0.33 )
-
-    if( madPreludeCurrentBeat >= madPreludeTotalBeats[index] ):
-        if( nextIndex >= ( madPreludeCount - 1 ) ):
-            madPreludeFinished = True
-        else:
-            nextIndex = index + 1
-            madPreludeCurrentBeat = 0
-
-    t = Timer( delay, madPreludeBeat, [ nextIndex ] )
-    t.start()
-    return True
-
-def mainBeat():
-    global mainFinished, mainBeat, player, mainStart, mainTempo, mainTotalBeats, mainCurrentBeat, channels, normalMode
-    if mainFinished:
-        return True
-    mainCurrentBeat = mainCurrentBeat + 1
-    if( mainCurrentBeat >= mainTotalBeats ):
-        mainFinished = True
-    nextBeat = mainStart + ( mainCurrentBeat * mainTempo )
-    position = player.position()
-    delay = nextBeat - position
-    if( delay < 0 ):
-        delay = 0
-    t = Timer( delay, mainBeat )
-    t.start()
-    if( mainCurrentBeat in [45, 141, 142, 143, 144, 145, 146, 147, 148, 157, 158, 159, 160, 165] ):
-        # Pulse all channels
-        for x in range( 10 ):
-            channels[x].on( 0.25 )
-    if( mainCurrentBeat in [8, 16, 64, 68, 72, 76, 80, 84] ):
-        # Uneven "God rest ye merry gentlemen"
-        playPhrase( 3, mainTempo )
-    if( mainCurrentBeat in [9, 17, 73, 77, 81, 85, 97, 101, 105, 109] ):
-        # Carol of the bells, "ding, dong, ding, dong"
-        playPhrase( 4, mainTempo )
-    if( mainCurrentBeat in [25, 26, 27, 28, 29, 30, 31, 32, 61, 62, 63, 64, 73, 105, 106, 107, 108, 109, 110, 111, 112, 121, 122, 123, 124, 125, 126, 127, 128, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175] ):
-        # Carol of the bells, repeating theme
-        playPhrase( 5, mainTempo )
-    if( mainCurrentBeat in [29, 30, 31, 32] ):
-        # Carol of the bells, repeating theme, dual notes
-        playPhrase( 6, mainTempo )
-    if( mainCurrentBeat in [33, 113, 129] ):
-        # Carol of the bells, "gaily they ring"
-        playPhrase( 7, mainTempo )
-    if( mainCurrentBeat in [34, 114, 130] ):
-        # Carol of the bells, "while people sing"
-        playPhrase( 8, mainTempo )
-    if( mainCurrentBeat in [35, 115, 131] ):
-        # Carol of the bells, "songs of good cheer"
-        playPhrase( 9, mainTempo )
-    if( mainCurrentBeat in [36, 116, 132] ):
-        # Carol of the bells, "Christmas is here"
-        playPhrase( 10, mainTempo )
-    if( mainCurrentBeat in [37, 39, 41, 42, 43, 44, 117, 119, 133, 135] ):
-        # Carol of the bells, "merry, merry, merry.."
-        playPhrase( 11, mainTempo )
-    if( mainCurrentBeat in [38, 40, 118, 120, 134, 136, 137, 138, 139, 140] ):
-        # Carol of the bells, "..merry Christmas"
-        playPhrase( 12, mainTempo )
-    if( mainCurrentBeat in [1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 21, 22, 23, 24, 89, 90, 91, 92, 93, 94, 95, 96] ):
-        # Pulsing base
-        playPhrase( 13, mainTempo )
-    if( mainCurrentBeat in [44, 48, 52, 56] ):
-        # Descent, part 1
-        playPhrase( 14, mainTempo )
-    if( mainCurrentBeat in [47, 51, 55, 59] ):
-        # Descent, part 2
-        playPhrase( 15, mainTempo )
-    if( mainCurrentBeat == 161 ):
-        # Fast random flashing
-        flashLights( 3 )
-    if( mainCurrentBeat == 165 ):
-        # Turn off random flashing
-        flashLights( -1 )
-    if( mainCurrentBeat in [149, 151, 153, 155] ):
-        stepDown( mainTempo )
-    if( mainCurrentBeat in [150, 152, 154, 156] ):
-        stepUp( mainTempo )
-
-    return True
-
-def madMainBeat( index ):
-    global madMainFinished, madMainBeat, player, madMainStarts, madMainTempos, madMainTotalBeats, madMainCurrentBeat, channels
-    if madMainFinished:
-        return True
-    nextIndex = index
-    madMainCurrentBeat = madMainCurrentBeat + 1
-    nextBeat = madMainStarts[ index ] + ( madMainCurrentBeat * madMainTempos[ index ] )
-    position = player.position()
-    delay = nextBeat - position
-    if( delay < 0 ):
-        delay = 0
-
-    for x in range( 10 ):
-        channels[x].on( madMainTempos[ index ] * 0.33 )
-
-    if( madMainCurrentBeat >= madMainTotalBeats[index] ):
-        if( nextIndex >= ( madMainCount - 1 ) ):
-            madMainFinished = True
-        else:
-            nextIndex = index + 1
-            madMainCurrentBeat = 0
-
-    t = Timer( delay, madMainBeat, [ nextIndex ] )
-    t.start()
-    return True
-
-def madFinaleBeat( index ):
-    global madFinaleFinished, madFinaleBeat, player, madFinaleStarts, madFinaleTempos, madFinaleTotalBeats, madFinaleCurrentBeat, channels, btncallback, lightMode
-    if madFinaleFinished:
-        return True
-    nextIndex = index
-    madFinaleCurrentBeat = madFinaleCurrentBeat + 1
-    nextBeat = madFinaleStarts[ index ] + ( madFinaleCurrentBeat * madFinaleTempos[ index ] )
-    position = player.position()
-    delay = nextBeat - position
-    if( delay < 0 ):
-        delay = 0
-
-    for x in range( 10 ):
-        channels[x].on( madFinaleTempos[ index ] * 0.33 )
-
-    if( madFinaleCurrentBeat >= madFinaleTotalBeats[index] ):
-        if( nextIndex >= ( madFinaleCount - 1 ) ):
-            madFinaleFinished = True
-        else:
-            nextIndex = index + 1
-            madFinaleCurrentBeat = 0
-
-    t = Timer( delay, madFinaleBeat, [ nextIndex ] )
-    t.start()
-    return True
-
-def playNote( channel, delay, duration ):
-    global channels
-    t = Timer( delay, channels[channel].on, [duration] )
-    t.start()
-    return True
-
-def stepUp( tempo ):
-    # light up all lights in order
-    order = [9, 8, 1, 6, 5, 3, 2, 4, 7, 0]
-    for x in range( 10 ):
-        if( x == 0 ):
-            channels[order[x]].on( tempo )
-        else:
-            t = Timer( tempo * 0.1 * float( x ), channels[order[x]].on )
-            t.start()
-    return True
-
-def stepDown( tempo ):
-    # turn off all lights in reverse order
-    order = [0, 7, 4, 2, 3, 5, 6, 1, 8, 9]
-    for x in range( 10 ):
-        if( x == 9 ):
-            channels[order[9]].on()
-        else:
-            channels[order[x]].on( tempo * 0.1 * (float( x ) + 1) )
-    return True
-
-def playPhrase( phrase, tempo ):
-    global channels
-    if( phrase == 0 ):
-        # Four notes that repeat at the beginning of the song
-        channels[6].on( tempo * 0.5 )
-        t1 = Timer( tempo * 0.5, channels[1].on, [tempo * 0.5] )
-        t2 = Timer( tempo, channels[6].on, [tempo * 0.5] )
-        t3 = Timer( tempo * 1.5, channels[5].on, [tempo * 0.5] )
-        t1.start()
-        t2.start()
-        t3.start()
-    elif( phrase == 1 ):
-        # "Got rest ye merry gentlemen"
-        t1 = Timer( tempo * 0.5, channels[3].on, [tempo * 0.33] )
-        t2 = Timer( tempo, channels[2].on, [tempo * 0.33] )
-        t3 = Timer( tempo * 1.5, channels[0].on, [tempo * 0.33] )
-        t4 = Timer( tempo * 2, channels[0].on, [tempo * 0.33] )
-        t5 = Timer( tempo * 2.5, channels[2].on, [tempo * 0.33] )
-        t6 = Timer( tempo * 3, channels[3].on, [tempo * 0.33] )
-        t7 = Timer( tempo * 3.5, channels[7].on, [tempo * 0.33] )
-        t8 = Timer( tempo * 4, channels[4].on, [tempo * 0.33] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-        t8.start()
-    elif( phrase == 2 ):
-        # "Let nothing you dismay"
-        t1 = Timer( tempo * 0.5, channels[4].on, [tempo * 0.33] )
-        t2 = Timer( tempo, channels[7].on, [tempo * 0.33] )
-        t3 = Timer( tempo * 1.5, channels[3].on, [tempo * 0.33] )
-        t4 = Timer( tempo * 2, channels[2].on, [tempo * 0.33] )
-        t5 = Timer( tempo * 2.5, channels[0].on, [tempo * 0.33] )
-        t6 = Timer( tempo * 3, channels[9].on, [tempo * 2] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-    elif( phrase == 3 ):
-        # Uneven "God rest ye merry gentlemen"
-        t1 = Timer( tempo * 0.66, channels[3].on, [tempo * 0.25] )
-        t2 = Timer( tempo, channels[2].on, [tempo * 0.25] )
-        t3 = Timer( tempo * 1.66, channels[0].on, [tempo * 0.25] )
-        t4 = Timer( tempo * 2, channels[0].on, [tempo * 0.25] )
-        t5 = Timer( tempo * 2.66, channels[2].on, [tempo * 0.25] )
-        t6 = Timer( tempo * 3, channels[3].on, [tempo * 0.25] )
-        t7 = Timer( tempo * 3.66, channels[7].on, [tempo * 0.25] )
-        t8 = Timer( tempo * 4, channels[4].on, [tempo * 0.25] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-        t8.start()
-    elif( phrase == 4 ):
-        # Carol of the bells, "ding, dong, ding, dong"
-        channels[8].on( tempo )
-        t1 = Timer( tempo, channels[1].on, [tempo] )
-        t2 = Timer( tempo * 2, channels[6].on, [tempo] )
-        t3 = Timer( tempo * 3, channels[5].on, [tempo * 2] )
-        t1.start()
-        t2.start()
-        t3.start()
-    elif( phrase == 5 ):
-        # Carol of the bells, repeating theme
-        channels[0].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.33, channels[2].on, [tempo * 0.2] )
-        t2 = Timer( tempo * 0.5, channels[0].on, [tempo * 0.2] )
-        t3 = Timer( tempo * 0.66, channels[3].on, [tempo * 0.2] )
-        t1.start()
-        t2.start()
-        t3.start()
-    elif( phrase == 6 ):
-        # Carol of the bells, repeating theme, dual notes
-        channels[1].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.33, channels[6].on, [tempo * 0.2] )
-        t2 = Timer( tempo * 0.5, channels[1].on, [tempo * 0.2] )
-        t3 = Timer( tempo * 0.66, channels[5].on, [tempo * 0.2] )
-        t1.start()
-        t2.start()
-        t3.start()
-    elif( phrase == 7 ):
-        # Carol of the bells, "gaily they ring"
-        channels[8].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.33, channels[8].on, [tempo * 0.1] )
-        t2 = Timer( tempo * 0.5, channels[8].on, [tempo * 0.166] )
-        t3 = Timer( tempo * 0.66, channels[1].on, [tempo * 0.166] )
-        t4 = Timer( tempo * 0.83, channels[6].on, [tempo * 0.166] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-    elif( phrase == 8 ):
-        # Carol of the bells, "while people sing"
-        channels[5].on( tempo * 0.166 )
-        channels[0].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.33, channels[5].on, [tempo * 0.1] )
-        t2 = Timer( tempo * 0.33, channels[0].on, [tempo * 0.1] )
-        t3 = Timer( tempo * 0.5, channels[5].on, [tempo * 0.166] )
-        t4 = Timer( tempo * 0.5, channels[0].on, [tempo * 0.166] )
-        t5 = Timer( tempo * 0.66, channels[3].on, [tempo * 0.166] )
-        t6 = Timer( tempo * 0.66, channels[2].on, [tempo * 0.166] )
-        t7 = Timer( tempo * 0.83, channels[4].on, [tempo * 0.166] )
-        t8 = Timer( tempo * 0.83, channels[7].on, [tempo * 0.166] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-        t8.start()
-    elif( phrase == 9 ):
-        # Carol of the bells, "songs of good cheer"
-        channels[3].on( tempo * 0.166 )
-        channels[2].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.33, channels[3].on, [tempo * 0.1] )
-        t2 = Timer( tempo * 0.33, channels[2].on, [tempo * 0.1] )
-        t3 = Timer( tempo * 0.5, channels[3].on, [tempo * 0.166] )
-        t4 = Timer( tempo * 0.5, channels[2].on, [tempo * 0.166] )
-        t5 = Timer( tempo * 0.66, channels[5].on, [tempo * 0.166] )
-        t6 = Timer( tempo * 0.66, channels[0].on, [tempo * 0.166] )
-        t7 = Timer( tempo * 0.83, channels[3].on, [tempo * 0.166] )
-        t8 = Timer( tempo * 0.83, channels[2].on, [tempo * 0.166] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-        t8.start()
-    elif( phrase == 10 ):
-        # Carol of the bells, "Christmas is here"
-        channels[4].on( tempo * 0.166 )
-        channels[7].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.33, channels[4].on, [tempo * 0.1] )
-        t2 = Timer( tempo * 0.33, channels[7].on, [tempo * 0.1] )
-        t3 = Timer( tempo * 0.5, channels[4].on, [tempo * 0.1] )
-        t4 = Timer( tempo * 0.5, channels[7].on, [tempo * 0.1] )
-        t5 = Timer( tempo * 0.66, channels[4].on, [tempo * 0.166] )
-        t6 = Timer( tempo * 0.66, channels[7].on, [tempo * 0.166] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-    elif( phrase == 11 ):
-        # Carol of the bells, "merry, merry, merry.."
-        channels[7].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.166, channels[4].on, [tempo * 0.166] )
-        t2 = Timer( tempo * 0.33, channels[2].on, [tempo * 0.166] )
-        t3 = Timer( tempo * 0.5, channels[3].on, [tempo * 0.166] )
-        t4 = Timer( tempo * 0.66, channels[0].on, [tempo * 0.166] )
-        t5 = Timer( tempo * 0.833, channels[5].on, [tempo * 0.166] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-    elif( phrase == 12 ):
-        # Carol of the bells, "..merry Christmas"
-        channels[6].on( tempo * 0.166 )
-        t1 = Timer( tempo * 0.166, channels[1].on, [tempo * 0.166] )
-        t2 = Timer( tempo * 0.33, channels[6].on, [tempo * 0.33] )
-        t3 = Timer( tempo * 0.66, channels[5].on, [tempo * 0.33] )
-        t1.start()
-        t2.start()
-        t3.start()
-    elif( phrase == 13 ):
-        # Pulsing base
-        for x in range( 10 ):
-            channels[x].on( 0.166 )
-        t1 = Timer( tempo * 0.33, channels[8].on, [tempo * 0.1] )
-        t2 = Timer( tempo * 0.33, channels[9].on, [tempo * 0.1] )
-        t3 = Timer( tempo * 0.5, channels[8].on, [tempo * 0.1] )
-        t4 = Timer( tempo * 0.5, channels[9].on, [tempo * 0.1] )
-        t5 = Timer( tempo * 0.66, channels[8].on, [tempo * 0.1] )
-        t6 = Timer( tempo * 0.66, channels[9].on, [tempo * 0.1] )
-        t7 = Timer( tempo * 0.833, channels[8].on, [tempo * 0.1] )
-        t8 = Timer( tempo * 0.833, channels[9].on, [tempo * 0.1] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-        t8.start()
-    elif( phrase == 14 ):
-        # Descent, part 1
-        t1 = Timer( tempo * 0.66, channels[9].on, [tempo * 0.166] )
-        t2 = Timer( tempo, channels[9].on, [tempo * 0.33] )
-        t3 = Timer( tempo * 1.33, channels[8].on, [tempo * 0.33] )
-        t4 = Timer( tempo * 1.66, channels[1].on, [tempo * 0.33] )
-        t5 = Timer( tempo * 2, channels[1].on, [tempo * 0.33] )
-        t6 = Timer( tempo * 2.33, channels[6].on, [tempo * 0.33] )
-        t7 = Timer( tempo * 2.66, channels[5].on, [tempo * 0.33] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-    elif( phrase == 15 ):
-        # Descent, part 2
-        channels[6].on( tempo * 0.33 )
-        t1 = Timer( tempo * 0.33, channels[5].on, [tempo * 0.33] )
-        t2 = Timer( tempo, channels[2].on, [tempo * 0.33] )
-        t3 = Timer( tempo, channels[3].on, [tempo * 0.33] )
-        t4 = Timer( tempo * 1.33, channels[2].on, [tempo * 0.33] )
-        t5 = Timer( tempo * 1.33, channels[3].on, [tempo * 0.33] )
-        t6 = Timer( tempo * 1.66, channels[4].on, [tempo * 0.33] )
-        t7 = Timer( tempo * 1.66, channels[7].on, [tempo * 0.33] )
-        t8 = Timer( tempo * 2, channels[0].on, [tempo * 0.166] )
-        t9 = Timer( tempo * 2.33, channels[0].on, [tempo * 0.1] )
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-        t6.start()
-        t7.start()
-        t8.start()
-        t9.start()
-
-    return True
-
-def flashOff( x, mode ):
-    global flashTimers, channels
-    r = random()
-    if mode == 0:
-        flashOn( x, mode )
-    else:
-        if mode == 1:
-            scaler = 5.0
-        elif mode == 2:
-            scaler =  3.0
-        else:
-            scaler = 0.5
-        channels[x].off()
-        flashTimers[x] = Timer( r * scaler, flashOn, [x, mode] )
-        flashTimers[x].start()
-    return True
-
-def flashOn( x, mode ):
-    global flashTimers, channels
-    r = random()
-    channels[x].on()
-    if mode != 0:
-        if mode == 1:
-            scaler = 5.0
-        elif mode == 2:
-            scaler =  3.0
-        else:
-            scaler = 0.5
-        flashTimers[x] = Timer( r * scaler, flashOff, [x, mode] )
-        flashTimers[x].start()
-    return True
-
-def flashLights( mode ):
-    global channels, flashTimers
-    for x in range( 10 ):
-        flashTimers[x].cancel()
-        if mode > -1:
-            flashOff( x, mode )
-    return True
-
-def debounced():
-    global debounce
-    debounce = False
-
-def btncallback(index, state):
-    global syncCb, endCb, debounced, flashLights, player, lightMode, channels, debounce, activeSong
-    if state and (debounce == False):
-        debounce = True
-        bounceCooldown = Timer( 0.5, debounced )
-        bounceCooldown.start()
-        previousLightMode = lightMode
-        wasPlaying = False
-        if (previousLightMode == 4) and (player != False):
-            wasPlaying = True
-
-        if index == 1:
-            if wasPlaying:
-                lightMode = 1
+class LightshowController:
+    """Main controller for the lightshow system."""
+    
+    def __init__(self, simulated: bool = False, songs_dir: str = "songs"):
+        """
+        Initialize the lightshow controller.
+        
+        Args:
+            simulated: If True, run in simulation mode (no GPIO, uses GUI)
+            songs_dir: Directory containing song JSON files
+        """
+        self.simulated = simulated
+        self.songs_dir = songs_dir
+        
+        # Setup GPIO or simulation mode
+        # In hardware mode, configure Raspberry Pi GPIO pins
+        # In simulation mode, skip GPIO setup entirely
+        if not simulated:
+            setup_gpio()
+        
+        # Initialize GUI simulator if in simulated mode
+        # The simulator provides a visual representation of the 10 light channels
+        # and three control buttons for development without hardware
+        self.simulator = None
+        if simulated:
+            self.simulator = LightshowSimulator()
+            self.simulator.set_button_callback(self._button_callback)
+            # Note: GUI will run on main thread (handled in run() method)
+        
+        # Create channels with callback for simulator
+        # channel_callback updates the visual display when lights change state
+        channel_callback = None
+        if simulated and self.simulator:
+            channel_callback = self.simulator.update_channel
+        
+        # Create 10 light channels (GPIO pins or simulated)
+        self.channels = create_channels(simulated, channel_callback)
+        
+        # Create 3 control buttons (GPIO pins or simulated)
+        # Button 0: Power/Shutdown, Button 1: Mode, Button 2: Lightshow
+        self.buttons = create_buttons(simulated, self._button_callback)
+        
+        # Flash timers for light pattern modes
+        # Each channel gets its own timer for independent random flashing
+        self.flash_timers = [Timer(0.1, lambda: None) for _ in range(10)]
+        
+        # State variables
+        self.light_mode = 1  # Current mode: 0=always on, 1=slow flash, 2=medium flash, 3=fast flash, 4=song playing
+        self.previous_light_mode = 1  # Mode to restore after lightshow completes
+        self.auto_play = False  # Whether to automatically advance to next song after current finishes
+        self.debounce = False  # Button debounce flag to prevent multiple rapid presses
+        self.player = None  # Current audio player instance (VLC, OMXPlayer, or simulated)
+        self.interpreter = None  # Current song interpreter instance (executes lightshow sequences)
+        self.current_song_id = None  # ID of currently playing song
+        
+        # Song loader - reads JSON files from songs directory
+        self.song_loader = SongLoader(songs_dir)
+        self.available_songs = self.song_loader.list_songs()  # List of song IDs in playlist order
+        self.current_song_index = 0  # Index into available_songs list
+        
+        # Integration API endpoints (optional)
+        # These allow external systems to trigger the lightshow via HTTP
+        # Set via environment variables: INTEGRATION_CHECK_URL and INTEGRATION_DONE_URL
+        self.integration_check = os.getenv("INTEGRATION_CHECK_URL", "")
+        self.integration_done = os.getenv("INTEGRATION_DONE_URL", "")
+        
+        print("=" * 60)
+        print("Pi Lightshow Initialized")
+        print(f"Mode: {'SIMULATED' if simulated else 'HARDWARE'}")
+        print(f"Available songs: {len(self.available_songs)}")
+        for song_id in self.available_songs:
+            info = self.song_loader.get_song_info(song_id)
+            print(f"  - {info['title']} by {info['artist']}")
+        print("=" * 60)
+        
+        # Start in light pattern mode
+        self._flash_lights(self.light_mode)
+        self._update_status()
+    
+    def _update_status(self):
+        """Update status display (for simulator)."""
+        if self.simulator:
+            if self.light_mode == 4:
+                song_info = self.song_loader.get_song_info(self.current_song_id)
+                if song_info:
+                    self.simulator.set_status(f"Playing: {song_info['title']}")
             else:
-                lightMode = lightMode + 1
-                if lightMode > 3:
-                    lightMode = 0
-        elif index == 2:
-            lightMode = 4
-
-        if (previousLightMode == 4) and (player != False):
-            print( "Stopping player." )
-            player.stop()
-            sleep( 2 )
-
+                modes = ["Always On", "Slow Flash", "Medium Flash", "Fast Flash"]
+                if self.light_mode < len(modes):
+                    self.simulator.set_status(f"Light Mode: {modes[self.light_mode]}")
+    
+    def _button_callback(self, index: int, state: bool):
+        """
+        Handle button press/release events.
+        
+        Args:
+            index: Button index (0=Power, 1=Mode, 2=Lightshow)
+            state: True for button press, False for button release
+        """
+        # Ignore button releases and debounced presses
+        if not state or self.debounce:
+            return
+        
+        # Debounce: prevent multiple rapid button presses
+        # After a button press, ignore all presses for 0.5 seconds
+        self.debounce = True
+        Timer(0.5, self._clear_debounce).start()
+        
+        # Check if we're currently playing a song
+        previous_mode = self.light_mode
+        was_playing = (previous_mode == 4) and (self.player is not None)
+        
+        # Button 0: Power (shutdown)
         if index == 0:
-            print( "Shutting down." )
-            flashLights( -1 )
-            GPIO.cleanup()
-            Popen( ['shutdown','-h','now'] )
-        elif (index == 1) and (previousLightMode != 4):
-                print( "Activating light mode: " + str(lightMode) )
-                flashLights( lightMode )
+            print("Shutting down...")
+            self._flash_lights(-1)  # Turn off all lights
+            if self.simulator:
+                self.simulator.set_status("Shutting down...")
+            cleanup_gpio(self.simulated)
+            
+            if not self.simulated:
+                # On Raspberry Pi: execute system shutdown
+                Popen(['shutdown', '-h', 'now'])
+            else:
+                # In simulation: just close the GUI
+                print("(Simulated shutdown - closing in 2 seconds)")
+                sleep(2)
+                if self.simulator:
+                    self.simulator.destroy()
+                sys.exit(0)
+        
+        # Button 1: Mode (cycle through light patterns)
+        elif index == 1:
+            if was_playing:
+                # If playing: stop the song and restore previous light pattern
+                print("Stopping playback...")
+                self.auto_play = False  # Disable auto-advance to prevent next song from starting
+                self._stop_song()
+                self.light_mode = self.previous_light_mode
+                sleep(1)
+            else:
+                # If not playing: cycle through light modes (0->1->2->3->0)
+                self.light_mode = (self.light_mode + 1) % 4
+            
+            print(f"Light mode: {self.light_mode}")
+            self._flash_lights(self.light_mode)
+            self._update_status()
+        
+        # Button 2: Lightshow (start music)
         elif index == 2:
-            if wasPlaying == False:
-                flashLights( -1 )
-                activeSong = 0
-                print( "Starting song: " + str(activeSong) )
-                player = Player( "/home/pi/pi-lightshow/carol.mp3", endCb, syncCb )
-
-
-powerButton = Button(0, 25, btncallback)
-modeButton = Button(1, 24, btncallback)
-lightshowButton = Button(2, 23, btncallback)
-
-flashLights( lightMode )
-
-try:
-    while True:
-        sleep( 1 )
-        if lightMode != 4:
-            if integrationCheck != "":
-                try:
-                    r = requests.get( integrationCheck )
-                    if r.text == "1":
+            if was_playing:
+                # If already playing: skip to next song
+                print("Already playing, skipping to next song...")
+                self._stop_song()
+                sleep(1)
+            else:
+                # If not playing: save current mode to restore after all songs finish
+                self.previous_light_mode = self.light_mode
+            
+            self._flash_lights(-1)  # Turn off all lights before starting
+            self.light_mode = 4  # Set to "song playing" mode
+            self.auto_play = True  # Enable auto-advance through playlist
+            self._start_next_song()
+            self._update_status()
+    
+    def _clear_debounce(self):
+        """Clear button debounce flag after 0.5s timeout.
+        
+        Called by Timer after button press to re-enable button responsiveness.
+        """
+        self.debounce = False
+    
+    def _start_next_song(self):
+        """Start playing the next song in the playlist.
+        
+        Loads the song JSON, creates the audio player, and initializes the interpreter.
+        If the MP3 file is missing, falls back to timing simulation without audio.
+        """
+        if not self.available_songs:
+            print("No songs available!")
+            self.light_mode = 1
+            self._flash_lights(self.light_mode)
+            return
+        
+        # Load song data from JSON file via song_loader
+        song_id = self.available_songs[self.current_song_index]
+        song_data = self.song_loader.get_song(song_id)  # Full JSON with beats/phrases
+        song_info = self.song_loader.get_song_info(song_id)  # Metadata (title, artist, mp3_file)
+        
+        self.current_song_id = song_id
+        
+        print(f"\n{'='*60}")
+        print(f"Starting: {song_info['title']}")
+        print(f"Artist: {song_info['artist']}")
+        print(f"{'='*60}\n")
+        
+        # Locate MP3 file (try relative to songs_dir first, then absolute path)
+        mp3_path = os.path.join(self.songs_dir, song_info['mp3_file'])
+        if not os.path.exists(mp3_path):
+            mp3_path = song_info['mp3_file']  # Try absolute path
+        
+        mp3_exists = os.path.exists(mp3_path)
+        if not mp3_exists:
+            print(f"WARNING: MP3 file not found: {mp3_path}")
+            print("Lightshow will run with timing simulation only (no audio)")
+        
+        # Use simulated player only if MP3 doesn't exist
+        # When --simulate flag is used with existing MP3, try VLC for audio
+        # (SimulatedPlayer uses internal timing, VLCPlayer synchronizes to audio)
+        use_simulated = not mp3_exists
+        
+        self.player = create_player(
+            mp3_path,
+            end_callback=self._song_ended,  # Called when song finishes
+            sync_callback=self._sync_callback,  # Called periodically with playback position
+            simulated=use_simulated
+        )
+        
+        # Create interpreter to execute beat sequences from JSON
+        self.interpreter = SongInterpreter(self.channels, self.player)
+        self.interpreter.load_song(song_data)
+        
+        # Wait for player to initialize audio device (prevents initial timing drift)
+        sleep(0.5)
+    
+    def _sync_callback(self, position: float):
+        """Called periodically with current playback position.
+        
+        Args:
+            position: Current playback time in seconds (from player)
+        
+        This callback detects when the player has started and triggers the interpreter
+        to begin executing beat sequences. Only acts on the first sync event.
+        """
+        if self.interpreter and not self.interpreter.section_states:
+            # First sync - interpreter hasn't started yet (section_states is empty)
+            # Start the interpreter to begin scheduling beat timers
+            self.interpreter.start(finished_callback=None)
+    
+    def _song_ended(self):
+        """Called when a song finishes playing.
+        
+        Handles playlist advancement:
+        - If auto_play is enabled: advance to next song, or loop back to previous mode
+        - If auto_play is disabled (Mode button pressed): just stop
+        """
+        print(f"\n{'='*60}")
+        print("Song finished")
+        print(f"{'='*60}\n")
+        
+        # Cleanup interpreter and player resources
+        if self.interpreter:
+            self.interpreter.stop()
+            self.interpreter = None
+        
+        self.player = None
+        
+        # Only continue if auto-play is enabled
+        # (Mode button sets auto_play=False to stop playback)
+        if not self.auto_play:
+            return
+        
+        # Move to next song in playlist
+        self.current_song_index = (self.current_song_index + 1) % len(self.available_songs)
+        
+        # Check if we've looped back to the beginning (all songs complete)
+        if self.current_song_index == 0:
+            # All songs finished - restore the light mode from before Lightshow button was pressed
+            print("All songs complete. Returning to previous light mode.")
+            self.light_mode = self.previous_light_mode
+            self.auto_play = False
+            self._flash_lights(self.light_mode)
+            self._update_status()
+        else:
+            # More songs to play - brief pause before next song
+            sleep(1)
+            self._start_next_song()
+    
+    def _stop_song(self):
+        """Stop currently playing song and cleanup resources.
+        
+        Cancels all pending beat timers and stops audio playback.
+        Called when Mode button is pressed during playback.
+        """
+        if self.interpreter:
+            self.interpreter.stop()  # Cancel all pending beat timers
+            self.interpreter = None
+        
+        if self.player:
+            self.player.stop()  # Stop audio playback
+            self.player = None
+        
+        self.current_song_id = None
+    
+    def _flash_lights(self, mode: int):
+        """Set light pattern mode.
+        
+        Args:
+            mode: -1=all off, 0=all on (always), 1=slow flash (5s scale),
+                  2=medium flash (3s scale), 3=fast flash (0.5s scale)
+        
+        Flash modes use recursive timers to create continuous random patterns.
+        Each channel flashes independently at random intervals within the time scale.
+        """
+        # Cancel existing flash timers to prevent overlapping patterns
+        for timer in self.flash_timers:
+            timer.cancel()
+        
+        if mode == -1:
+            # Turn all off (used during shutdown and before song start)
+            for channel in self.channels:
+                channel.off()
+        elif mode == 0:
+            # Always on (no flashing)
+            for channel in self.channels:
+                channel.on()
+        else:
+            # Random flashing at different speeds (modes 1-3)
+            # Start each channel's flash pattern independently
+            for i, channel in enumerate(self.channels):
+                self._flash_off(i, mode)
+    
+    def _flash_off(self, channel_idx: int, mode: int):
+        """Turn channel off and schedule next flash on.
+        
+        Args:
+            channel_idx: Index of channel to control (0-9)
+            mode: Flash mode (1=slow, 2=medium, 3=fast)
+        
+        Creates recursive timer pattern: off -> (random delay) -> on -> off -> ...
+        Random delay is scaled by mode (slow=5s, medium=3s, fast=0.5s).
+        """
+        if mode == 0:
+            # Mode 0 (always on) shouldn't reach here, but handle defensively
+            self._flash_on(channel_idx, mode)
+            return
+        
+        # Map mode to time scale: 1=slow (5s), 2=medium (3s), 3=fast (0.5s)
+        scaler = {1: 5.0, 2: 3.0, 3: 0.5}.get(mode, 3.0)
+        r = random()  # Random value 0.0-1.0
+        
+        self.channels[channel_idx].off()
+        
+        # Schedule next flash_on after random delay (0 to scaler seconds)
+        self.flash_timers[channel_idx] = Timer(
+            r * scaler, self._flash_on, [channel_idx, mode]
+        )
+        self.flash_timers[channel_idx].start()
+    
+    def _flash_on(self, channel_idx: int, mode: int):
+        """Turn channel on and schedule next flash off.
+        
+        Args:
+            channel_idx: Index of channel to control (0-9)
+            mode: Flash mode (0=always on, 1=slow, 2=medium, 3=fast)
+        
+        Creates recursive timer pattern: on -> (random delay) -> off -> on -> ...
+        If mode=0 (always on), does not schedule flash_off (stops recursion).
+        """
+        self.channels[channel_idx].on()
+        
+        if mode != 0:
+            # Schedule next flash_off after random delay (continues recursion)
+            scaler = {1: 5.0, 2: 3.0, 3: 0.5}.get(mode, 3.0)
+            r = random()  # Random value 0.0-1.0
+            
+            self.flash_timers[channel_idx] = Timer(
+                r * scaler, self._flash_off, [channel_idx, mode]
+            )
+            self.flash_timers[channel_idx].start()
+    
+    def run(self):
+        """Main run loop.
+        
+        In simulation mode: runs the Tkinter GUI (blocking until window closed)
+        In hardware mode: infinite loop checking for API triggers every second
+        
+        API Integration:
+        - Environment variables LIGHTSHOW_CHECK and LIGHTSHOW_DONE can specify URLs
+        - Every second, checks LIGHTSHOW_CHECK URL
+        - If response is "1", calls LIGHTSHOW_DONE and triggers lightshow
+        - Allows external systems (home automation, web API) to start lightshow
+        """
+        try:
+            if self.simulator:
+                # In simulation mode, run the GUI (blocks until window closed)
+                print("Running in simulation mode. Close window to exit.")
+                self.simulator.run()
+            else:
+                # In hardware mode, keep running and check for API triggers
+                while True:
+                    sleep(1)
+                    
+                    # Check integration API if configured
+                    # Only check when not playing (light_mode != 4)
+                    if self.light_mode != 4 and self.integration_check:
                         try:
-                            requests.get( integrationDone )
-                            btncallback( 2, 1 )
+                            import requests
+                            # Check if external system wants to trigger lightshow
+                            r = requests.get(self.integration_check, timeout=5)
+                            if r.text == "1":
+                                # Acknowledge the trigger by calling done URL
+                                try:
+                                    requests.get(self.integration_done, timeout=5)
+                                    # Simulate Lightshow button press
+                                    self._button_callback(2, True)
+                                except:
+                                    print("Problem connecting to done API")
+                                    sleep(10)
                         except:
-                            print( "Problem connecting to done API" )
-                            sleep( 10 )
-                except:
-                    print( "Problem connecting to check API" )
-                    sleep( 10 )
-        pass
-finally:
-    flashLights( -1 )
-    if lightMode == 4:
-        player.stop()
-    GPIO.cleanup()
+                            print("Problem connecting to check API")
+                            sleep(10)
+        
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+        
+        finally:
+            self._cleanup()
+    
+    def _cleanup(self):
+        """Cleanup resources on shutdown.
+        
+        Performs orderly shutdown:
+        1. Stop any playing song (cancel timers, stop audio)
+        2. Turn off all lights
+        3. Release GPIO pins (on Pi hardware)
+        4. Close GUI window (in simulation)
+        5. Force exit to terminate all threads
+        """
+        print("Cleaning up...")
+        
+        # Stop any playing song (cancels beat timers, stops audio)
+        if self.player:
+            self._stop_song()
+        
+        # Turn off all lights
+        self._flash_lights(-1)
+        
+        # Cleanup GPIO pins (releases hardware resources on Pi)
+        cleanup_gpio(self.simulated)
+        
+        # Close simulator window
+        if self.simulator:
+            try:
+                self.simulator.destroy()
+            except:
+                pass
+        
+        print("Goodbye!")
+        
+        # Force exit to ensure all threads (timers, GUI) are stopped
+        import os
+        os._exit(0)
 
+
+def main():
+    """Main entry point.
+    
+    Command-line arguments:
+    --simulate: Run with GUI simulator instead of GPIO hardware
+    --songs-dir: Specify directory containing song JSON files (default: songs)
+    
+    Usage:
+    python lightshow.py --simulate                    # Test on any computer
+    python lightshow.py --songs-dir /path/to/songs    # Use custom song directory
+    sudo python lightshow.py                           # Run on Raspberry Pi (sudo needed for GPIO)
+    """
+    parser = argparse.ArgumentParser(description='Pi Lightshow Controller')
+    parser.add_argument(
+        '--simulate',
+        action='store_true',
+        help='Run in simulation mode with GUI (no hardware required)'
+    )
+    parser.add_argument(
+        '--songs-dir',
+        default='songs',
+        help='Directory containing song JSON files (default: songs)'
+    )
+    
+    args = parser.parse_args()
+    
+    controller = LightshowController(
+        simulated=args.simulate,
+        songs_dir=args.songs_dir
+    )
+    
+    controller.run()
+
+
+if __name__ == "__main__":
+    main()

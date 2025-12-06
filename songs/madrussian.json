@@ -1,0 +1,551 @@
+{
+  "title": "Mad Russian's Christmas",
+  "artist": "Trans-Siberian Orchestra",
+  "description": "Christmas lightshow choreographed to Mad Russian's Christmas",
+  "mp3_file": "madrussian.mp3",
+  "sections": [
+    {
+      "name": "prelude",
+      "segments": [
+        {
+          "start_time": 0.7,
+          "tempo": 0.624,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 5.692,
+          "tempo": 0.6295,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 10.728,
+          "tempo": 0.643625,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 15.877,
+          "tempo": 0.627625,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 20.898,
+          "tempo": 0.6255,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 25.902,
+          "tempo": 0.61525,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 30.824,
+          "tempo": 0.604571429,
+          "total_beats": 14,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 39.288,
+          "tempo": 0.620375,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 44.251,
+          "tempo": 0.608875,
+          "total_beats": 8,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 49.122,
+          "tempo": 0.590625,
+          "total_beats": 16,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 58.572,
+          "tempo": 0.6072,
+          "total_beats": 5,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 61.608,
+          "tempo": 0.6285,
+          "total_beats": 2,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 62.865,
+          "tempo": 0.644,
+          "total_beats": 2,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 64.153,
+          "tempo": 0.7955,
+          "total_beats": 2,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 65.744,
+          "tempo": 0.779,
+          "total_beats": 1,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 66.523,
+          "tempo": 0.851,
+          "total_beats": 1,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 67.374,
+          "tempo": 0.943,
+          "total_beats": 1,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 68.317,
+          "tempo": 1.101,
+          "total_beats": 1,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 69.418,
+          "tempo": 1.508,
+          "total_beats": 1,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 70.926,
+          "tempo": 3.094,
+          "total_beats": 1,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "segments": [
+        {
+          "start_time": 74.188,
+          "tempo": 0.446160714,
+          "total_beats": 56,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 99.173,
+          "tempo": 0.861625,
+          "total_beats": 32,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 126.745,
+          "tempo": 0.8686875,
+          "total_beats": 16,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 140.644,
+          "tempo": 0.859409091,
+          "total_beats": 44,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 178.458,
+          "tempo": 0.8610625,
+          "total_beats": 16,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 192.235,
+          "tempo": 0.4445625,
+          "total_beats": 16,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 199.348,
+          "tempo": 0.4521875,
+          "total_beats": 16,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 206.583,
+          "tempo": 0.488333333,
+          "total_beats": 3,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 208.048,
+          "tempo": 0.545333333,
+          "total_beats": 3,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 209.684,
+          "tempo": 0.624666667,
+          "total_beats": 3,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 211.558,
+          "tempo": 0.761,
+          "total_beats": 3,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start_time": 213.841,
+          "tempo": 1.127,
+          "total_beats": 3,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "finale",
+      "segments": [
+        {
+          "start_time": 217.222,
+          "tempo": 0.447144928,
+          "total_beats": 138,
+          "sequences": [
+            {
+              "all_beats": true,
+              "actions": [
+                {
+                  "type": "all_channels",
+                  "duration_multiplier": 0.33
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
