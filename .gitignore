@@ -1,2 +1,25 @@
+# Audio files (not included due to copyright)
 *.mp3
+*.wav
+*.ogg
+
+# Python bytecode
 *.pyc
+__pycache__/
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Virtual environments
+venv/
+venv-editor/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.code-workspace

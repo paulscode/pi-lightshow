@@ -1,0 +1,7 @@
+# Requirements for the Song Editor
+# These dependencies are only needed for running the editor on a development PC
+# They are NOT required for running the lightshow on the Raspberry Pi
+
+pygame>=2.5.0
+pydub>=0.25.1
+numpy>=1.24.0

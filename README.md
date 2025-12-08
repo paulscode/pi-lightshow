@@ -7,6 +7,7 @@ A Christmas lightshow controller for Raspberry Pi with JSON-based song definitio
 - **10-channel light control** via GPIO or simulated display
 - **JSON-based song definitions** for easy customization
 - **Graphical simulator** for development without Raspberry Pi hardware
+- **Visual song editor** for creating choreography with timeline interface
 - **Multiple operating modes**: Always on, slow/medium/fast random flashing, music lightshow
 - **Button controls**: Power, Mode cycling, Lightshow start
 - **Optional API integration** for external triggers
@@ -16,8 +17,8 @@ A Christmas lightshow controller for Raspberry Pi with JSON-based song definitio
 ```
 pi-lightshow/
 ├── songs/                           # JSON song definitions
-│   ├── carol-of-the-bells.json     # Trans-Siberian Orchestra
-│   ├── mad-russian.json             # Mad Russian's Christmas
+│   ├── carol.json                   # Trans-Siberian Orchestra
+│   ├── madrussian.json              # Mad Russian's Christmas
 │   └── playlist.json                # Song playback order
 ├── src/
 │   ├── song_loader.py               # Song loading and interpretation
@@ -27,7 +28,9 @@ pi-lightshow/
 │   └── simulator/
 │       └── gui_simulator.py         # Graphical development simulator
 ├── lightshow.py                     # Main application
+├── song_editor.py                   # Visual song editor (dev only)
 ├── setup-dev.sh                     # Automated development setup
+├── setup-editor.sh                  # Song editor setup script
 └── README.md                        # This file
 ```
 
@@ -87,6 +90,8 @@ This will open a GUI showing the 10 channels arranged as they would be physicall
 - If MP3 files are missing: Lightshow runs in timing-simulation mode (lights only, no audio)
 - The simulator works either way - perfect for testing timing before adding music
 
+**Note:** For creating custom songs, see the "Creating Custom Songs" section below. A visual song editor is available for easier choreography creation.
+
 ### Raspberry Pi Setup
 
 **IMPORTANT:** Currently requires Raspbian Buster (legacy) due to OMXPlayer dependency.
@@ -116,8 +121,8 @@ cd pi-lightshow
 4. **Add MP3 files:**
 
 Place your MP3 files in the `songs/` directory, matching the filenames specified in each song's JSON file:
-- `carol.mp3` for Carol of the Bells (referenced in `carol-of-the-bells.json`)
-- `madrussian.mp3` for Mad Russian's Christmas (referenced in `mad-russian.json`)
+- `carol.mp3` for Carol of the Bells (referenced in `carol.json`)
+- `madrussian.mp3` for Mad Russian's Christmas (referenced in `madrussian.json`)
 
 **Note:** The JSON files are included in the repository, but the MP3 files are NOT included due to copyright. You must provide your own MP3 files.
 
@@ -185,9 +190,7 @@ python3 lightshow.py --simulate --songs-dir /path/to/songs
 - `--simulate`: Run with GUI simulator instead of GPIO hardware
 - `--songs-dir <path>`: Specify directory containing song JSON files (default: `songs`)
 
-### Controls
-
-### Three Button Inputs
+### Button Controls
 
 1. **Power Button** (GPIO 25 to Ground) - Red button in simulator
    - Press to initiate shutdown sequence
@@ -218,10 +221,10 @@ python3 lightshow.py --simulate --songs-dir /path/to/songs
 | 4       | GPIO 13  | Group 2, right |
 | 5       | GPIO 19  | Group 3, right |
 | 6       | GPIO 26  | Group 2, middle-right |
-| 7       | GPIO 20  | Group 2, middle-left |
-| 8       | GPIO 16  | Group 4, left |
-| 9       | GPIO 12  | Group 1, right |
-| 10      | GPIO 21  | Group 1, left |
+| 7       | GPIO 21  | Group 2, middle-left |
+| 8       | GPIO 20  | Group 4, left |
+| 9       | GPIO 16  | Group 1, right |
+| 10      | GPIO 12  | Group 1, left |
 
 ### Physical Arrangement
 
@@ -233,22 +236,65 @@ python3 lightshow.py --simulate --songs-dir /path/to/songs
 
 ## 🎵 Creating Custom Songs
 
+Songs can be created in two ways:
+1. **Visual Editor** (recommended) - Use the GUI song editor for intuitive timeline-based editing
+2. **Manual JSON editing** - Advanced users can edit JSON files directly
+
+### Using the Song Editor (Recommended)
+
+The visual song editor provides a timeline-based interface for choreographing light shows. See [EDITOR_README.md](EDITOR_README.md) for complete documentation.
+
+**Quick Start:**
+
+1. **Install editor dependencies:**
+   ```bash
+   ./setup-editor.sh
+   ```
+
+2. **Launch the editor:**
+   ```bash
+   python3 song_editor.py
+   ```
+
+3. **Create a new song:**
+   - File → Open MP3... and select your audio file
+   - Fill in metadata (title, artist, description)
+   - Add sections with start times, tempos, and beat counts
+   - Place channel activations on the timeline
+   - Save (Ctrl+S)
+
+**Editor Features:**
+- Visual waveform display
+- Timeline with 10 channel columns matching physical layout
+- Beat-synchronized editing
+- Section and phrase management
+- Audio playback with synchronized visualization
+- Zoom and pan controls
+- Automatic JSON save/load
+
+**Note:** The editor is designed for development PCs (Linux Mint, Ubuntu, etc.) and should NOT be installed on the Raspberry Pi. It requires pygame, pydub, numpy, and ffmpeg which are not needed for running lightshows.
+
+### Manual JSON Editing
+
 Song definitions are JSON files in the `songs/` directory.
 
 ### Playlist Configuration
 
-The `songs/playlist.json` file controls the order songs play:
+Control song playback order with `songs/playlist.json`:
 
 ```json
 {
   "playlist": [
-    "carol-of-the-bells",
-    "mad-russian"
+    "carol",
+    "madrussian"
   ]
 }
 ```
 
-If `playlist.json` doesn't exist, songs will play in alphabetical order by filename.
+**Notes:**
+- List song names without the `.json` extension
+- If `playlist.json` doesn't exist, songs play in alphabetical order by filename
+- Invalid song names are skipped with a warning
 
 ### Audio Player Notes
 
@@ -352,11 +398,6 @@ Reusable note patterns with timing relative to tempo:
 }
 ```
 
-**Channel Indexing:** 
-- In JSON files: Use 0-indexed values (0-9) where 0 = physical channel 1, 9 = physical channel 10
-- In documentation: Refer to channels as 1-10 for clarity
-- Example: To control "Channel 1" (GPIO 17), use `"channel": 0` in JSON
-
 ### Multi-Segment Songs
 
 For songs with varying tempos (like Mad Russian), use segments:
@@ -380,6 +421,421 @@ For songs with varying tempos (like Mad Russian), use segments:
   ]
 }
 ```
+
+## 📖 JSON Format Reference
+
+Complete reference for the Pi Lightshow JSON song format.
+
+### File Structure
+
+```json
+{
+  "title": "string",
+  "artist": "string", 
+  "description": "string",
+  "mp3_file": "filename.mp3",
+  "sections": [ ... ],
+  "phrases": { ... }
+}
+```
+
+### Sections
+
+Two types of sections:
+
+**Simple Section (Single Tempo):**
+
+```json
+{
+  "name": "section_name",
+  "start_time": 0.0,
+  "tempo": 0.5,
+  "total_beats": 32,
+  "sequences": [ ... ]
+}
+```
+
+**Multi-Tempo Section (With Segments):**
+
+```json
+{
+  "name": "section_name",
+  "segments": [
+    {
+      "start_time": 0.0,
+      "tempo": 0.5,
+      "total_beats": 16,
+      "sequences": [ ... ]
+    },
+    {
+      "start_time": 8.0,
+      "tempo": 0.6,
+      "total_beats": 16,
+      "sequences": [ ... ]
+    }
+  ]
+}
+```
+
+### Sequences
+
+A sequence defines what happens at specific beats:
+
+**Execute on Specific Beat:**
+
+```json
+{
+  "beat": 5,
+  "actions": [ ... ]
+}
+```
+
+**Execute on Multiple Beats:**
+
+```json
+{
+  "beats": [1, 5, 9, 13],
+  "actions": [ ... ]
+}
+```
+
+**Execute on All Beats:**
+
+```json
+{
+  "all_beats": true,
+  "actions": [ ... ]
+}
+```
+
+### Actions
+
+**Note (Single Channel):**
+
+```json
+{
+  "type": "note",
+  "channel": 0,
+  "delay": 0.0,
+  "duration": 0.5
+}
+```
+
+- **channel**: 0-9 (channel 0 = physical channel 1)
+- **delay**: Seconds to wait before turning on
+- **duration**: Seconds to stay on
+
+**Phrase (Reusable Pattern):**
+
+```json
+{
+  "type": "phrase",
+  "id": "0",
+  "description": "Optional description"
+}
+```
+
+- **id**: String or number matching phrase ID in phrases dictionary
+
+**All Channels:**
+
+```json
+{
+  "type": "all_channels",
+  "duration": 0.25
+}
+```
+
+Or with duration multiplier:
+
+```json
+{
+  "type": "all_channels",
+  "duration_multiplier": 0.5
+}
+```
+
+**Step Up (Wave Effect):**
+
+```json
+{
+  "type": "step_up"
+}
+```
+
+Lights up all channels in sequence (visual wave)
+
+**Step Down (Reverse Wave):**
+
+```json
+{
+  "type": "step_down"
+}
+```
+
+Turns off channels in reverse sequence
+
+**Flash Mode (Mode Change):**
+
+```json
+{
+  "type": "flash_mode",
+  "mode": 3
+}
+```
+
+Changes the flash mode during song:
+- 0: Always on
+- 1: Slow flash
+- 2: Medium flash
+- 3: Fast flash
+- -1: Restore previous mode
+
+### Phrases
+
+Phrases are reusable note patterns:
+
+```json
+{
+  "phrases": {
+    "0": {
+      "description": "Rising pattern",
+      "notes": [
+        {
+          "channel": 0,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 0.25,
+          "duration_multiplier": 0.25
+        }
+      ]
+    }
+  }
+}
+```
+
+- **delay_multiplier**: Multiply by tempo to get delay in seconds
+- **duration_multiplier**: Multiply by tempo to get duration in seconds
+
+### Channel Numbers
+
+Channels are 0-indexed in JSON but 1-indexed in physical layout:
+
+| JSON | Physical | GPIO | Position |
+|------|----------|------|----------|
+| 0    | 1        | 17   | Far right |
+| 1    | 2        | 27   | Group 2, left |
+| 2    | 3        | 22   | Group 3, left |
+| 3    | 4        | 13   | Group 2, right |
+| 4    | 5        | 19   | Group 3, right |
+| 5    | 6        | 26   | Group 2, middle-right |
+| 6    | 7        | 21   | Group 2, middle-left |
+| 7    | 8        | 20   | Group 4, left |
+| 8    | 9        | 16   | Group 1, right |
+| 9    | 10       | 12   | Group 1, left |
+
+Physical layout:
+```
+ 10   9   2   7   6   4   3   5   8   1
+```
+
+### Timing Calculations
+
+**BPM to Tempo:**
+
+```
+tempo = 60 / BPM
+```
+
+Examples:
+- 120 BPM = 0.5 seconds per beat
+- 140 BPM = 0.4286 seconds per beat
+- 90 BPM = 0.6667 seconds per beat
+
+**Measuring Start Time:**
+
+Use Audacity or similar:
+1. Load MP3 in Audacity
+2. Zoom to see waveform clearly
+3. Place cursor at first beat
+4. Read time at bottom (e.g., "0.349 sec")
+5. Use this as start_time
+
+**Measuring Tempo:**
+
+1. Find two clear consecutive beats
+2. Note their times (e.g., beat 1 at 0.5s, beat 2 at 1.0s)
+3. Subtract: 1.0 - 0.5 = 0.5 seconds per beat
+4. Use this as tempo
+
+**Calculating Total Beats:**
+
+```
+section_duration = end_time - start_time
+total_beats = section_duration / tempo
+```
+
+Round to nearest integer.
+
+### Common Patterns
+
+**Pulse on Every Beat:**
+
+```json
+{
+  "all_beats": true,
+  "actions": [
+    {"type": "all_channels", "duration": 0.25}
+  ]
+}
+```
+
+**Alternating Channels:**
+
+```json
+{
+  "beat": 1,
+  "actions": [
+    {"type": "note", "channel": 0, "duration": 0.5},
+    {"type": "note", "channel": 2, "duration": 0.5},
+    {"type": "note", "channel": 4, "duration": 0.5}
+  ]
+},
+{
+  "beat": 2,
+  "actions": [
+    {"type": "note", "channel": 1, "duration": 0.5},
+    {"type": "note", "channel": 3, "duration": 0.5}
+  ]
+}
+```
+
+**Build Up Effect:**
+
+```json
+{
+  "beats": [1, 3, 5, 7],
+  "actions": [{"type": "step_up"}]
+}
+```
+
+**Big Impact:**
+
+```json
+{
+  "beat": 16,
+  "actions": [
+    {"type": "all_channels", "duration": 1.0}
+  ]
+}
+```
+
+**Cascading Phrase:**
+
+Create a phrase:
+```json
+{
+  "phrases": {
+    "cascade": {
+      "description": "Channels light in sequence",
+      "notes": [
+        {"channel": 0, "delay_multiplier": 0.0, "duration_multiplier": 0.1},
+        {"channel": 1, "delay_multiplier": 0.1, "duration_multiplier": 0.1},
+        {"channel": 2, "delay_multiplier": 0.2, "duration_multiplier": 0.1},
+        {"channel": 3, "delay_multiplier": 0.3, "duration_multiplier": 0.1}
+      ]
+    }
+  }
+}
+```
+
+Use it:
+```json
+{
+  "beats": [1, 5, 9, 13],
+  "actions": [
+    {"type": "phrase", "id": "cascade"}
+  ]
+}
+```
+
+### Validation Checklist
+
+Before testing your song:
+
+- [ ] mp3_file matches actual MP3 filename
+- [ ] All section start_times are in ascending order
+- [ ] Tempo values are positive (> 0)
+- [ ] Total_beats matches actual song duration
+- [ ] Channel numbers are 0-9 (not 1-10)
+- [ ] All phrase IDs referenced in actions exist in phrases dict
+- [ ] Duration values are reasonable (typically 0.1 to 2.0)
+- [ ] No sections overlap (unless intentional)
+- [ ] JSON syntax is valid (check with `python3 -m json.tool song.json`)
+
+### Testing Tips
+
+1. **Test in simulator first**
+   ```bash
+   python3 lightshow.py --simulate
+   ```
+
+2. **Check JSON syntax**
+   ```bash
+   python3 -m json.tool songs/your-song.json
+   ```
+
+3. **Verify timing**
+   - First few beats should sync perfectly
+   - If drift occurs, check start_time and tempo
+   - Use Audacity to verify measurements
+
+4. **Start simple**
+   - Test with just one section
+   - Add complexity gradually
+   - Easier to debug small issues
+
+### Example: Complete Simple Song
+
+```json
+{
+  "title": "Test Song",
+  "artist": "Test Artist",
+  "description": "Simple test pattern",
+  "mp3_file": "test.mp3",
+  "sections": [
+    {
+      "name": "main",
+      "start_time": 0.5,
+      "tempo": 0.5,
+      "total_beats": 16,
+      "sequences": [
+        {
+          "all_beats": true,
+          "actions": [
+            {
+              "type": "all_channels",
+              "duration": 0.25
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "phrases": {}
+}
+```
+
+This makes all channels flash for 0.25 seconds on every beat, starting at 0.5 seconds into the song, with 16 beats at 120 BPM (0.5 seconds per beat).
+
+### Resources
+
+- **Audacity**: Free audio editor for timing measurements - https://www.audacityteam.org/
+- **BPM Counter**: Online tools to detect song tempo (search "online BPM counter")
+- **JSON Validator**: Check your JSON syntax at https://jsonlint.com/ or use `python3 -m json.tool your-song.json`
 
 ## 🔧 Hardware Setup
 
@@ -418,14 +874,24 @@ For songs with varying tempos (like Mad Russian), use segments:
 
 ## 🔌 API Integration (Optional)
 
-Set environment variables to enable external triggering:
+Enable external triggering for home automation or web-based control systems.
+
+Set environment variables to configure the integration:
 
 ```bash
 export INTEGRATION_CHECK_URL="https://example.com/api/check"
 export INTEGRATION_DONE_URL="https://example.com/api/done"
 ```
 
-The system will poll the check URL every second. If it returns "1", the lightshow starts and the done URL is called.
+**How it works:**
+- The system polls `INTEGRATION_CHECK_URL` every second
+- If the URL returns "1", the lightshow automatically starts
+- When the show finishes, `INTEGRATION_DONE_URL` is called to notify the external system
+
+**Use cases:**
+- Integration with home automation platforms (Home Assistant, OpenHAB)
+- Web-based remote control interfaces
+- Coordinated multi-device displays
 
 ## 🐛 Development & Debugging
 
@@ -503,10 +969,13 @@ Contributions welcome! Areas for improvement:
 
 - [ ] Support for newer Raspbian with alternative to OMXPlayer
 - [ ] Web interface for remote control
-- [ ] Song editor GUI
+- [x] Song editor GUI (✓ Complete - see EDITOR_README.md)
 - [ ] More song definitions
 - [ ] MQTT integration
 - [ ] Sound-reactive mode
+- [ ] Drag-and-drop timeline editing in editor
+- [ ] Beat detection automation
+- [ ] Real-time hardware preview from editor
 
 ## 📄 License
 
