@@ -552,7 +552,7 @@
     "0": {
       "description": "Background repeating phrase",
       "notes": [
-        {"channel": 6, "delay_multiplier": 0.5, "duration_multiplier": 0.5},
+        {"channel": 6, "delay_multiplier": 0.0, "duration_multiplier": 0.5},
         {"channel": 1, "delay_multiplier": 0.5, "duration_multiplier": 0.5},
         {"channel": 6, "delay_multiplier": 1.0, "duration_multiplier": 0.5},
         {"channel": 5, "delay_multiplier": 1.5, "duration_multiplier": 0.5}
