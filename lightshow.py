@@ -8,6 +8,7 @@ Supports both Raspberry Pi GPIO control and GUI simulation for development.
 
 import sys
 import os
+import json
 from time import sleep
 from threading import Timer
 from random import random
@@ -24,6 +25,25 @@ from hardware.channel_interface import (
 )
 from player_interface import create_player
 from simulator.gui_simulator import LightshowSimulator
+
+
+def load_config(config_path: str = "config.json") -> dict:
+    """
+    Load configuration from JSON file.
+    
+    Args:
+        config_path: Path to the configuration file
+        
+    Returns:
+        Dictionary containing configuration, or empty dict if file not found
+    """
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not load config file: {e}")
+    return {}
 
 
 class LightshowController:
@@ -88,9 +108,18 @@ class LightshowController:
         
         # Integration API endpoints (optional)
         # These allow external systems to trigger the lightshow via HTTP
-        # Set via environment variables: INTEGRATION_CHECK_URL and INTEGRATION_DONE_URL
-        self.integration_check = os.getenv("INTEGRATION_CHECK_URL", "")
-        self.integration_done = os.getenv("INTEGRATION_DONE_URL", "")
+        # Priority: config.json > environment variables > empty (disabled)
+        config = load_config()
+        api_config = config.get("api", {})
+        
+        self.integration_check = (
+            api_config.get("integration_check_url") or 
+            os.getenv("INTEGRATION_CHECK_URL", "")
+        )
+        self.integration_done = (
+            api_config.get("integration_done_url") or 
+            os.getenv("INTEGRATION_DONE_URL", "")
+        )
         
         print("=" * 60)
         print("Pi Lightshow Initialized")

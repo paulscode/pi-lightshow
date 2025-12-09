@@ -1,0 +1,7 @@
+{
+  "comment": "Copy this file to config.json and customize the settings",
+  "api": {
+    "integration_check_url": "https://example.com/api/check",
+    "integration_done_url": "https://example.com/api/done"
+  }
+}

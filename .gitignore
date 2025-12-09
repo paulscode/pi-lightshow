@@ -23,3 +23,6 @@ ENV/
 .vscode/
 .idea/
 *.code-workspace
+
+# Configuration files (use config-example.json as template)
+config.json

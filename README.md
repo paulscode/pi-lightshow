@@ -876,17 +876,36 @@ This makes all channels flash for 0.25 seconds on every beat, starting at 0.5 se
 
 Enable external triggering for home automation or web-based control systems.
 
-Set environment variables to configure the integration:
+### Configuration
+
+You can configure API endpoints using either a config file (recommended) or environment variables.
+
+**Option 1: Config File (Recommended)**
+
+Create `config.json` in the project root (use `config-example.json` as a template):
+
+```json
+{
+  "api": {
+    "integration_check_url": "https://example.com/api/check",
+    "integration_done_url": "https://example.com/api/done"
+  }
+}
+```
+
+**Option 2: Environment Variables**
 
 ```bash
 export INTEGRATION_CHECK_URL="https://example.com/api/check"
 export INTEGRATION_DONE_URL="https://example.com/api/done"
 ```
 
+**Priority:** Config file settings take precedence over environment variables. If neither is configured, the lightshow operates normally without integration.
+
 **How it works:**
-- The system polls `INTEGRATION_CHECK_URL` every second
+- The system polls the check URL every second when not playing
 - If the URL returns "1", the lightshow automatically starts
-- When the show finishes, `INTEGRATION_DONE_URL` is called to notify the external system
+- When the show finishes, the done URL is called to notify the external system
 
 **Use cases:**
 - Integration with home automation platforms (Home Assistant, OpenHAB)
