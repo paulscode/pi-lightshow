@@ -299,15 +299,7 @@ class SongInterpreter:
         position = self.player.position()  # Current audio position
         delay = next_beat_time - position  # Delay until next beat
         
-        # Debug output for first few beats only (to verify timing accuracy)
-        if current_beat <= 3:
-            print(f"[{state_key}] Beat {current_beat}/{total_beats}: "
-                  f"next@{next_beat_time:.3f}s, pos={position:.3f}s, delay={delay:.3f}s")
-        
         if delay < 0:
-            # We're behind schedule - warn if significantly late
-            if delay < -0.1:  # More than 100ms late
-                print(f"WARNING [{state_key}] Beat {current_beat}: {delay:.3f}s behind!")
             delay = 0
         
         # Schedule next beat FIRST (prevents cumulative drift)
