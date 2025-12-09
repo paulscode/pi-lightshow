@@ -24,7 +24,6 @@ from hardware.channel_interface import (
     create_channels, create_buttons, setup_gpio, cleanup_gpio
 )
 from player_interface import create_player
-from simulator.gui_simulator import LightshowSimulator
 
 
 def load_config(config_path: str = "config.json") -> dict:
@@ -71,6 +70,7 @@ class LightshowController:
         # and three control buttons for development without hardware
         self.simulator = None
         if simulated:
+            from simulator.gui_simulator import LightshowSimulator
             self.simulator = LightshowSimulator()
             self.simulator.set_button_callback(self._button_callback)
             # Note: GUI will run on main thread (handled in run() method)
