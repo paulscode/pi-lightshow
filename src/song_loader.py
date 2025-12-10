@@ -149,6 +149,7 @@ class SongInterpreter:
         self.section_states = {}  # Tracks beat progress per section
         self.finished_callback = None
         self.flash_mode_callback = None  # Callback for flash mode changes
+        self._timer_cleanup_counter = 0  # Counter to trigger periodic cleanup
         
     def load_song(self, song_data: Dict):
         """Load a song definition from JSON.
@@ -228,7 +229,7 @@ class SongInterpreter:
         # Schedule first beat execution after delay
         timer = Timer(delay, self._execute_beat, [state_key])
         timer.start()
-        self.active_timers.append(timer)
+        self._add_timer(timer)
     
     def _schedule_segment_start(self, section_name: str, seg_idx: int, segment: Dict):
         """Schedule the start of a segment within a section.
@@ -262,7 +263,7 @@ class SongInterpreter:
         # Schedule first beat execution after delay
         timer = Timer(delay, self._execute_beat, [state_key])
         timer.start()
-        self.active_timers.append(timer)
+        self._add_timer(timer)
     
     def _execute_beat(self, state_key: str):
         """Execute actions for the current beat.
@@ -315,7 +316,7 @@ class SongInterpreter:
         # This ensures timing is based on absolute song position, not execution delays
         timer = Timer(delay, self._execute_beat, [state_key])
         timer.start()
-        self.active_timers.append(timer)
+        self._add_timer(timer)
         
         # NOW execute actions for this beat
         # Iterate through all sequences to find which apply to current beat
@@ -365,7 +366,7 @@ class SongInterpreter:
                 # Schedule channel.on() after delay
                 timer = Timer(delay, self.channels[channel_idx].on, [duration])
                 timer.start()
-                self.active_timers.append(timer)
+                self._add_timer(timer)
         
         elif action_type == 'phrase':
             # Play a predefined phrase (reusable note sequence)
@@ -432,7 +433,7 @@ class SongInterpreter:
                     # Scheduled execution
                     timer = Timer(delay, self.channels[channel_idx].on, [duration])
                     timer.start()
-                    self.active_timers.append(timer)
+                    self._add_timer(timer)
     
     def _step_up(self, tempo: float):
         """Light up all channels in order (visual wave effect).
@@ -451,7 +452,7 @@ class SongInterpreter:
                 # Subsequent channels turn on with staggered delays
                 timer = Timer(tempo * 0.1 * float(x), self.channels[order[x]].on)
                 timer.start()
-                self.active_timers.append(timer)
+                self._add_timer(timer)
     
     def _step_down(self, tempo: float):
         """Turn off all channels in reverse order.
@@ -503,3 +504,27 @@ class SongInterpreter:
         for timer in self.active_timers:
             timer.cancel()
         self.active_timers = []
+    
+    def _cleanup_finished_timers(self):
+        """Remove finished timers from active_timers list.
+        
+        Prevents memory/resource leak by removing timers that have already executed.
+        Called periodically during playback to keep the list size manageable.
+        """
+        # Filter out timers that are no longer alive (finished executing)
+        self.active_timers = [t for t in self.active_timers if t.is_alive()]
+    
+    def _add_timer(self, timer):
+        """Add a timer and periodically cleanup finished ones.
+        
+        Args:
+            timer: Timer object to add to active list
+        """
+        self.active_timers.append(timer)
+        
+        # Periodically clean up finished timers to prevent list growth
+        # Do this every 20 timers to balance overhead vs memory usage
+        self._timer_cleanup_counter += 1
+        if self._timer_cleanup_counter >= 20:
+            self._cleanup_finished_timers()
+            self._timer_cleanup_counter = 0
