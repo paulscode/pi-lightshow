@@ -384,20 +384,28 @@ def create_player(path: str, end_callback: Optional[Callable] = None,
     except:
         pass  # Not on Raspberry Pi or file doesn't exist
     
-    # Try OMXPlayer on Raspberry Pi (optimized for Pi hardware)
+    # Try OMXPlayer on Raspberry Pi (optimized for Pi hardware, Buster and older only)
     if is_raspberry_pi:
         try:
             print("Detected Raspberry Pi, attempting to use OMXPlayer...")
             return OMXPlayerWrapper(path, end_callback, sync_callback)
         except ImportError as e:
-            print(f"WARNING: OMXPlayer not available ({e}). Falling back to VLC/simulated player.")
+            print(f"INFO: OMXPlayer not available ({e}).")
+            print("INFO: OMXPlayer is only available on Raspbian Buster and older.")
+            print("INFO: Falling back to VLC player (works on newer Raspberry Pi OS).")
         except Exception as e:
-            print(f"WARNING: OMXPlayer initialization failed ({e}). Falling back to VLC/simulated player.")
+            print(f"WARNING: OMXPlayer initialization failed ({e}). Falling back to VLC player.")
     
-    # On other systems (Linux, Mac, Windows), try VLC
+    # Try VLC on Raspberry Pi (newer OS) or other systems (Linux, Mac, Windows)
     try:
+        if is_raspberry_pi:
+            print("Attempting to use VLC player on Raspberry Pi...")
         return VLCPlayer(path, end_callback, sync_callback)
-    except:
+    except Exception as e:
         # Fall back to simulated if VLC fails to load
-        print("Falling back to simulated player")
+        if is_raspberry_pi:
+            print(f"WARNING: VLC player failed ({e}). Falling back to simulated player.")
+            print("Install VLC with: sudo apt-get install vlc python3-vlc")
+        else:
+            print("Falling back to simulated player")
         return SimulatedPlayer(path, end_callback, sync_callback)
