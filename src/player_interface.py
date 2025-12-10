@@ -375,14 +375,24 @@ def create_player(path: str, end_callback: Optional[Callable] = None,
     
     # Try to detect if we're on a Raspberry Pi
     # Raspberry Pi has /proc/device-tree/model file with "Raspberry Pi" in it
+    is_raspberry_pi = False
     try:
         with open('/proc/device-tree/model', 'r') as f:
             model = f.read()
             if 'Raspberry Pi' in model:
-                # Use OMXPlayer on Raspberry Pi (optimized for Pi hardware)
-                return OMXPlayerWrapper(path, end_callback, sync_callback)
+                is_raspberry_pi = True
     except:
         pass  # Not on Raspberry Pi or file doesn't exist
+    
+    # Try OMXPlayer on Raspberry Pi (optimized for Pi hardware)
+    if is_raspberry_pi:
+        try:
+            print("Detected Raspberry Pi, attempting to use OMXPlayer...")
+            return OMXPlayerWrapper(path, end_callback, sync_callback)
+        except ImportError as e:
+            print(f"WARNING: OMXPlayer not available ({e}). Falling back to VLC/simulated player.")
+        except Exception as e:
+            print(f"WARNING: OMXPlayer initialization failed ({e}). Falling back to VLC/simulated player.")
     
     # On other systems (Linux, Mac, Windows), try VLC
     try:
