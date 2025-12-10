@@ -325,7 +325,33 @@
       "total_beats": 175,
       "sequences": [
         {
-          "beats": [1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 21, 22, 23, 24, 89, 90, 91, 92, 93, 94, 95, 96],
+          "beats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            13,
+            14,
+            15,
+            16,
+            21,
+            22,
+            23,
+            24,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -335,7 +361,16 @@
           ]
         },
         {
-          "beats": [8, 16, 64, 68, 72, 76, 80, 84],
+          "beats": [
+            8,
+            16,
+            64,
+            68,
+            72,
+            76,
+            80,
+            84
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -345,7 +380,18 @@
           ]
         },
         {
-          "beats": [9, 17, 73, 77, 81, 85, 97, 101, 105, 109],
+          "beats": [
+            9,
+            17,
+            73,
+            77,
+            81,
+            85,
+            97,
+            101,
+            105,
+            109
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -355,7 +401,47 @@
           ]
         },
         {
-          "beats": [25, 26, 27, 28, 29, 30, 31, 32, 61, 62, 63, 64, 73, 105, 106, 107, 108, 109, 110, 111, 112, 121, 122, 123, 124, 125, 126, 127, 128, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175],
+          "beats": [
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            61,
+            62,
+            63,
+            64,
+            73,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            166,
+            167,
+            168,
+            169,
+            170,
+            171,
+            172,
+            173,
+            174,
+            175
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -365,7 +451,12 @@
           ]
         },
         {
-          "beats": [29, 30, 31, 32],
+          "beats": [
+            29,
+            30,
+            31,
+            32
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -375,7 +466,11 @@
           ]
         },
         {
-          "beats": [33, 113, 129],
+          "beats": [
+            33,
+            113,
+            129
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -385,7 +480,11 @@
           ]
         },
         {
-          "beats": [34, 114, 130],
+          "beats": [
+            34,
+            114,
+            130
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -395,7 +494,11 @@
           ]
         },
         {
-          "beats": [35, 115, 131],
+          "beats": [
+            35,
+            115,
+            131
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -405,7 +508,11 @@
           ]
         },
         {
-          "beats": [36, 116, 132],
+          "beats": [
+            36,
+            116,
+            132
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -415,7 +522,18 @@
           ]
         },
         {
-          "beats": [37, 39, 41, 42, 43, 44, 117, 119, 133, 135],
+          "beats": [
+            37,
+            39,
+            41,
+            42,
+            43,
+            44,
+            117,
+            119,
+            133,
+            135
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -425,7 +543,18 @@
           ]
         },
         {
-          "beats": [38, 40, 118, 120, 134, 136, 137, 138, 139, 140],
+          "beats": [
+            38,
+            40,
+            118,
+            120,
+            134,
+            136,
+            137,
+            138,
+            139,
+            140
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -435,7 +564,12 @@
           ]
         },
         {
-          "beats": [44, 48, 52, 56],
+          "beats": [
+            44,
+            48,
+            52,
+            56
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -445,7 +579,22 @@
           ]
         },
         {
-          "beats": [45, 141, 142, 143, 144, 145, 146, 147, 148, 157, 158, 159, 160, 165],
+          "beats": [
+            45,
+            141,
+            142,
+            143,
+            144,
+            145,
+            146,
+            147,
+            148,
+            157,
+            158,
+            159,
+            160,
+            165
+          ],
           "actions": [
             {
               "type": "all_channels",
@@ -454,7 +603,12 @@
           ]
         },
         {
-          "beats": [47, 51, 55, 59],
+          "beats": [
+            47,
+            51,
+            55,
+            59
+          ],
           "actions": [
             {
               "type": "phrase",
@@ -552,197 +706,661 @@
     "0": {
       "description": "Background repeating phrase",
       "notes": [
-        {"channel": 6, "delay_multiplier": 0.0, "duration_multiplier": 0.5},
-        {"channel": 1, "delay_multiplier": 0.5, "duration_multiplier": 0.5},
-        {"channel": 6, "delay_multiplier": 1.0, "duration_multiplier": 0.5},
-        {"channel": 5, "delay_multiplier": 1.5, "duration_multiplier": 0.5}
+        {
+          "channel": 6,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.5
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.5
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.5
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 1.5,
+          "duration_multiplier": 0.5
+        }
       ]
     },
     "1": {
       "description": "God rest ye merry gentlemen",
       "notes": [
-        {"channel": 3, "delay_multiplier": 0.5, "duration_multiplier": 0.33},
-        {"channel": 2, "delay_multiplier": 1.0, "duration_multiplier": 0.33},
-        {"channel": 0, "delay_multiplier": 1.5, "duration_multiplier": 0.33},
-        {"channel": 0, "delay_multiplier": 2.0, "duration_multiplier": 0.33},
-        {"channel": 2, "delay_multiplier": 2.5, "duration_multiplier": 0.33},
-        {"channel": 3, "delay_multiplier": 3.0, "duration_multiplier": 0.33},
-        {"channel": 7, "delay_multiplier": 3.5, "duration_multiplier": 0.33},
-        {"channel": 4, "delay_multiplier": 4.0, "duration_multiplier": 0.33}
+        {
+          "channel": 3,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 1.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 2.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 2.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 3.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 3.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 4.0,
+          "duration_multiplier": 0.33
+        }
       ]
     },
     "2": {
       "description": "Let nothing you dismay",
       "notes": [
-        {"channel": 4, "delay_multiplier": 0.5, "duration_multiplier": 0.33},
-        {"channel": 7, "delay_multiplier": 1.0, "duration_multiplier": 0.33},
-        {"channel": 3, "delay_multiplier": 1.5, "duration_multiplier": 0.33},
-        {"channel": 2, "delay_multiplier": 2.0, "duration_multiplier": 0.33},
-        {"channel": 0, "delay_multiplier": 2.5, "duration_multiplier": 0.33},
-        {"channel": 9, "delay_multiplier": 3.0, "duration_multiplier": 2.0}
+        {
+          "channel": 4,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 1.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 2.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 2.5,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 3.0,
+          "duration_multiplier": 2.0
+        }
       ]
     },
     "3": {
       "description": "Uneven God rest ye merry gentlemen",
       "notes": [
-        {"channel": 3, "delay_multiplier": 0.66, "duration_multiplier": 0.25},
-        {"channel": 2, "delay_multiplier": 1.0, "duration_multiplier": 0.25},
-        {"channel": 0, "delay_multiplier": 1.66, "duration_multiplier": 0.25},
-        {"channel": 0, "delay_multiplier": 2.0, "duration_multiplier": 0.25},
-        {"channel": 2, "delay_multiplier": 2.66, "duration_multiplier": 0.25},
-        {"channel": 3, "delay_multiplier": 3.0, "duration_multiplier": 0.25},
-        {"channel": 7, "delay_multiplier": 3.66, "duration_multiplier": 0.25},
-        {"channel": 4, "delay_multiplier": 4.0, "duration_multiplier": 0.25}
+        {
+          "channel": 3,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 1.66,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 2.0,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 2.66,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 3.0,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 3.66,
+          "duration_multiplier": 0.25
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 4.0,
+          "duration_multiplier": 0.25
+        }
       ]
     },
     "4": {
       "description": "Carol of the bells ding dong",
       "notes": [
-        {"channel": 8, "delay_multiplier": 0.0, "duration_multiplier": 1.0},
-        {"channel": 1, "delay_multiplier": 1.0, "duration_multiplier": 1.0},
-        {"channel": 6, "delay_multiplier": 2.0, "duration_multiplier": 1.0},
-        {"channel": 5, "delay_multiplier": 3.0, "duration_multiplier": 2.0}
+        {
+          "channel": 8,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 1.0
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 1.0
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 2.0,
+          "duration_multiplier": 1.0
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 3.0,
+          "duration_multiplier": 1.0
+        }
       ]
     },
     "5": {
       "description": "Carol of the bells repeating theme",
       "notes": [
-        {"channel": 0, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.33, "duration_multiplier": 0.2},
-        {"channel": 0, "delay_multiplier": 0.5, "duration_multiplier": 0.2},
-        {"channel": 3, "delay_multiplier": 0.66, "duration_multiplier": 0.2}
+        {
+          "channel": 0,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.2
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.2
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.2
+        }
       ]
     },
     "6": {
       "description": "Carol of the bells dual notes",
       "notes": [
-        {"channel": 1, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 6, "delay_multiplier": 0.33, "duration_multiplier": 0.2},
-        {"channel": 1, "delay_multiplier": 0.5, "duration_multiplier": 0.2},
-        {"channel": 5, "delay_multiplier": 0.66, "duration_multiplier": 0.2}
+        {
+          "channel": 1,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.2
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.2
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.2
+        }
       ]
     },
     "7": {
       "description": "Gaily they ring",
       "notes": [
-        {"channel": 8, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 8, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 8, "delay_multiplier": 0.5, "duration_multiplier": 0.166},
-        {"channel": 1, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 6, "delay_multiplier": 0.83, "duration_multiplier": 0.166}
+        {
+          "channel": 8,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 0.83,
+          "duration_multiplier": 0.166
+        }
       ]
     },
     "8": {
       "description": "While people sing",
       "notes": [
-        {"channel": 5, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 0, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 5, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 0, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 5, "delay_multiplier": 0.5, "duration_multiplier": 0.166},
-        {"channel": 0, "delay_multiplier": 0.5, "duration_multiplier": 0.166},
-        {"channel": 3, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 4, "delay_multiplier": 0.83, "duration_multiplier": 0.166},
-        {"channel": 7, "delay_multiplier": 0.83, "duration_multiplier": 0.166}
+        {
+          "channel": 5,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 0.83,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 0.83,
+          "duration_multiplier": 0.166
+        }
       ]
     },
     "9": {
       "description": "Songs of good cheer",
       "notes": [
-        {"channel": 3, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 3, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 2, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 3, "delay_multiplier": 0.5, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.5, "duration_multiplier": 0.166},
-        {"channel": 5, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 0, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 3, "delay_multiplier": 0.83, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.83, "duration_multiplier": 0.166}
+        {
+          "channel": 3,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.83,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.83,
+          "duration_multiplier": 0.166
+        }
       ]
     },
     "10": {
       "description": "Christmas is here",
       "notes": [
-        {"channel": 4, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 7, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 4, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 7, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 4, "delay_multiplier": 0.5, "duration_multiplier": 0.1},
-        {"channel": 7, "delay_multiplier": 0.5, "duration_multiplier": 0.1},
-        {"channel": 4, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 7, "delay_multiplier": 0.66, "duration_multiplier": 0.166}
+        {
+          "channel": 4,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        }
       ]
     },
     "11": {
       "description": "Merry merry merry",
       "notes": [
-        {"channel": 7, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 4, "delay_multiplier": 0.166, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.33, "duration_multiplier": 0.166},
-        {"channel": 3, "delay_multiplier": 0.5, "duration_multiplier": 0.166},
-        {"channel": 0, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 5, "delay_multiplier": 0.833, "duration_multiplier": 0.166}
+        {
+          "channel": 7,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 0.166,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.833,
+          "duration_multiplier": 0.166
+        }
       ]
     },
     "12": {
       "description": "Merry Christmas",
       "notes": [
-        {"channel": 6, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 1, "delay_multiplier": 0.166, "duration_multiplier": 0.166},
-        {"channel": 6, "delay_multiplier": 0.33, "duration_multiplier": 0.33},
-        {"channel": 5, "delay_multiplier": 0.66, "duration_multiplier": 0.33}
+        {
+          "channel": 6,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 0.166,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.33
+        }
       ]
     },
     "13": {
       "description": "Pulsing base",
       "notes": [
-        {"channel": 0, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 1, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 2, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 3, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 4, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 5, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 6, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 7, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 8, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 9, "delay_multiplier": 0.0, "duration_multiplier": 0.166},
-        {"channel": 8, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 9, "delay_multiplier": 0.33, "duration_multiplier": 0.1},
-        {"channel": 8, "delay_multiplier": 0.5, "duration_multiplier": 0.1},
-        {"channel": 9, "delay_multiplier": 0.5, "duration_multiplier": 0.1},
-        {"channel": 8, "delay_multiplier": 0.66, "duration_multiplier": 0.1},
-        {"channel": 9, "delay_multiplier": 0.66, "duration_multiplier": 0.1},
-        {"channel": 8, "delay_multiplier": 0.833, "duration_multiplier": 0.1},
-        {"channel": 9, "delay_multiplier": 0.833, "duration_multiplier": 0.1}
+        {
+          "channel": 0,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 0.5,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 0.833,
+          "duration_multiplier": 0.1
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 0.833,
+          "duration_multiplier": 0.1
+        }
       ]
     },
     "14": {
       "description": "Descent part 1",
       "notes": [
-        {"channel": 9, "delay_multiplier": 0.66, "duration_multiplier": 0.166},
-        {"channel": 9, "delay_multiplier": 1.0, "duration_multiplier": 0.33},
-        {"channel": 8, "delay_multiplier": 1.33, "duration_multiplier": 0.33},
-        {"channel": 1, "delay_multiplier": 1.66, "duration_multiplier": 0.33},
-        {"channel": 1, "delay_multiplier": 2.0, "duration_multiplier": 0.33},
-        {"channel": 6, "delay_multiplier": 2.33, "duration_multiplier": 0.33},
-        {"channel": 5, "delay_multiplier": 2.66, "duration_multiplier": 0.33}
+        {
+          "channel": 9,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 9,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 8,
+          "delay_multiplier": 1.33,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 1.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 1,
+          "delay_multiplier": 2.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 6,
+          "delay_multiplier": 2.33,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 2.66,
+          "duration_multiplier": 0.33
+        }
       ]
     },
     "15": {
       "description": "Descent part 2",
       "notes": [
-        {"channel": 6, "delay_multiplier": 0.0, "duration_multiplier": 0.33},
-        {"channel": 5, "delay_multiplier": 0.33, "duration_multiplier": 0.33},
-        {"channel": 2, "delay_multiplier": 1.0, "duration_multiplier": 0.33},
-        {"channel": 3, "delay_multiplier": 1.0, "duration_multiplier": 0.33},
-        {"channel": 2, "delay_multiplier": 1.33, "duration_multiplier": 0.33},
-        {"channel": 3, "delay_multiplier": 1.33, "duration_multiplier": 0.33},
-        {"channel": 4, "delay_multiplier": 1.66, "duration_multiplier": 0.33},
-        {"channel": 7, "delay_multiplier": 1.66, "duration_multiplier": 0.33},
-        {"channel": 0, "delay_multiplier": 2.0, "duration_multiplier": 0.166},
-        {"channel": 0, "delay_multiplier": 2.33, "duration_multiplier": 0.1}
+        {
+          "channel": 6,
+          "delay_multiplier": 0.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 5,
+          "delay_multiplier": 0.33,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 0.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 2,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 3,
+          "delay_multiplier": 1.0,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 4,
+          "delay_multiplier": 1.33,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 7,
+          "delay_multiplier": 1.33,
+          "duration_multiplier": 0.33
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 1.66,
+          "duration_multiplier": 0.166
+        },
+        {
+          "channel": 0,
+          "delay_multiplier": 2.0,
+          "duration_multiplier": 0.1
+        }
       ]
     }
   }
