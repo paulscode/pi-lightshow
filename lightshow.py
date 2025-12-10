@@ -275,6 +275,7 @@ class LightshowController:
         
         # Create interpreter to execute beat sequences from JSON
         self.interpreter = SongInterpreter(self.channels, self.player)
+        self.interpreter.set_flash_mode_callback(self._flash_lights)
         self.interpreter.load_song(song_data)
         
         # Wait for player to initialize audio device (prevents initial timing drift)

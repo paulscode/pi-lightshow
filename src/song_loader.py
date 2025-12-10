@@ -148,6 +148,7 @@ class SongInterpreter:
         self.active_timers = []  # All pending timers (for cancellation)
         self.section_states = {}  # Tracks beat progress per section
         self.finished_callback = None
+        self.flash_mode_callback = None  # Callback for flash mode changes
         
     def load_song(self, song_data: Dict):
         """Load a song definition from JSON.
@@ -158,6 +159,14 @@ class SongInterpreter:
         self.song_data = song_data
         self.section_states = {}  # Reset state for new song
         
+    def set_flash_mode_callback(self, callback: Optional[Callable]):
+        """Set callback for flash mode changes during song playback.
+        
+        Args:
+            callback: Function to call with mode parameter when flash_mode action executes
+        """
+        self.flash_mode_callback = callback
+    
     def start(self, finished_callback: Optional[Callable] = None):
         """Start playing the lightshow.
         
@@ -390,8 +399,10 @@ class SongInterpreter:
             self._step_down(tempo)
         
         elif action_type == 'flash_mode':
-            # Reserved for future use (mode changes during song)
-            pass
+            # Change flash mode during song (e.g., switch to fast random flashing)
+            mode = action.get('mode', 0)
+            if self.flash_mode_callback:
+                self.flash_mode_callback(mode)
     
     def _execute_phrase(self, phrase: Dict, tempo: float):
         """Execute a phrase (sequence of notes).

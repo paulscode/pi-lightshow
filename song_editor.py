@@ -106,6 +106,11 @@ class SongEditor:
         self.last_actual_position = 0       # Last position from pygame mixer (for interpolation baseline)
         self.last_update_time = 0           # time.time() when last_actual_position was updated
         self.interpolation_rate = 0.016     # Fast loop interval in seconds (~60fps for smooth animation)
+        self.channel_states = [False] * 10  # Track active state of each channel (0-indexed)
+        self.active_notes = []              # List of (channel, end_time) tuples for currently active notes
+        self.current_flash_mode = -1        # Current flash mode (-1=off, 0=always on, 1=slow, 2=med, 3=fast)
+        self.flash_random_seed = 12345      # Fixed seed for reproducible "random" flash patterns
+        self.flash_channel_states = [False] * 10  # Random flash states (updated periodically)
         
         # ========== UI State ==========
         self.selected_items = []            # List of selected canvas item IDs (not currently used)
@@ -496,7 +501,29 @@ class SongEditor:
         
         # Time label area
         self.channel_bar.create_text(30, y_pos, text="Time", fill='#aaa', font=('Arial', 10, 'bold'))
+    
+    def _update_channel_bar_lights(self):
+        """Update the channel bar bulbs to reflect current channel states.
         
+        This method is called during playback to make the channel header bulbs
+        light up in sync with the actual lightshow, matching the simulator behavior.
+        """
+        for i, channel_num in enumerate(self.channel_order):
+            # channel_order uses 1-indexed numbers (1-10)
+            # channel_states uses 0-indexed (0-9)
+            channel_idx = channel_num - 1
+            
+            if channel_idx < len(self.channel_states):
+                is_active = self.channel_states[channel_idx]
+                tag = f'bulb_{channel_num}'
+                
+                if is_active:
+                    # Channel is on - bright yellow/white with glow
+                    self.channel_bar.itemconfig(tag, fill='#ffff00', outline='#ffcc00')
+                else:
+                    # Channel is off - dark gray
+                    self.channel_bar.itemconfig(tag, fill='#333', outline='#666')
+    
     def _draw_timeline(self):
         """Draw the complete timeline visualization with all elements.
         
@@ -720,7 +747,8 @@ class SongEditor:
                         # Draw actions with sequence location info
                         for action_idx, action in enumerate(sequence.get('actions', [])):
                             self._draw_action(action, y, left_margin, channel_width, tempo,
-                                            section_idx, seg_idx, seq_idx, action_idx)
+                                            section_idx, seg_idx, seq_idx, action_idx,
+                                            beat_time, timing_info)
     
     def _get_beat_numbers(self, sequence, total_beats):
         """Extract beat numbers from a sequence and convert to 0-indexed for timing.
@@ -745,7 +773,7 @@ class SongEditor:
             return [b - 1 for b in sequence['beats']]
         return []
     
-    def _draw_action(self, action, y_pos, left_margin, channel_width, tempo, section_idx, seg_idx, seq_idx, action_idx):
+    def _draw_action(self, action, y_pos, left_margin, channel_width, tempo, section_idx, seg_idx, seq_idx, action_idx, beat_time=None, timing_info=None):
         """Draw a single action rectangle on the timeline with detailed visualization.
         
         Creates clickable visual representations of actions with proper positioning,
@@ -761,6 +789,8 @@ class SongEditor:
             seg_idx: Segment index (None if not in segment)
             seq_idx: Sequence index within timing section
             action_idx: Action index within sequence
+            beat_time: Actual time in seconds when this action occurs (for lookahead)
+            timing_info: Full segment/section dict (for lookahead)
         """
         action_type = action.get('type')
         
@@ -907,13 +937,18 @@ class SongEditor:
         
         elif action_type == 'step_up':
             # Draw step_up: sequential channel activation with staggered delays
-            # Channels activate in specific order with 0.1*tempo delay between each
+            # First channel blinks (on then off), others turn on and stay on
             # Visual: shows "wave" of activation moving across channels
             # Order: [10, 9, 2, 7, 6, 4, 3, 5, 8, 1] (physical channel numbers)
             order = [9, 8, 1, 6, 5, 3, 2, 4, 7, 0]  # 0-indexed for code
             
-            # Total duration = 10 channels * 0.1*tempo delay spacing
-            total_duration = tempo * 0.1 * 10
+            # Find when these channels get overridden (if timing_info available)
+            if beat_time is not None and timing_info is not None:
+                override_time = self._find_next_override_time(beat_time, timing_info, list(range(10)))
+                total_duration = override_time - beat_time
+            else:
+                # Fallback if context not available
+                total_duration = tempo * 2
             
             # Draw dark blue background spanning all channels
             x1 = left_margin + 2
@@ -931,10 +966,23 @@ class SongEditor:
                                             font=('Arial', 8, 'bold'), tags='action_label')
             
             # Draw each channel activation as a light blue rectangle
-            # Each channel activates 0.1*tempo after the previous
+            # First channel: activates then deactivates after tempo
+            # Other channels: activate at staggered times and stay on until overridden
             for idx, ch in enumerate(order):
                 delay = tempo * 0.1 * idx  # Staggered start time
-                duration = tempo  # Each channel stays on for one beat
+                
+                if idx == 0:
+                    # First channel turns on then off
+                    duration = tempo
+                else:
+                    # Other channels stay on until overridden
+                    # Calculate duration from when this channel turns on to override time
+                    channel_start = beat_time + delay if beat_time is not None else delay
+                    if beat_time is not None and timing_info is not None:
+                        override_time = self._find_next_override_time(beat_time, timing_info, [ch])
+                        duration = override_time - channel_start
+                    else:
+                        duration = tempo * 2  # Fallback
                 
                 note_y1 = y_pos + int(delay * self.zoom_level * 100)
                 note_y2 = note_y1 + int(duration * self.zoom_level * 100)
@@ -962,8 +1010,14 @@ class SongEditor:
             # Order: [1, 8, 5, 3, 4, 6, 7, 2, 9, 10] (physical channel numbers)
             order = [0, 7, 4, 2, 3, 5, 6, 1, 8, 9]  # 0-indexed for code
             
-            # Max duration = longest channel duration (last channel = 10 * 0.1 * tempo)
-            max_duration = tempo * 0.1 * 10
+            # Find when the last channel gets overridden (if timing_info available)
+            last_channel = order[9]
+            if beat_time is not None and timing_info is not None:
+                override_time = self._find_next_override_time(beat_time, timing_info, [last_channel])
+                max_duration = override_time - beat_time
+            else:
+                # Fallback if context not available
+                max_duration = tempo * 2
             
             # Draw dark cyan background spanning all channels
             x1 = left_margin + 2
@@ -981,11 +1035,11 @@ class SongEditor:
                                             font=('Arial', 8, 'bold'), tags='action_label')
             
             # Draw each channel with progressively longer duration
-            # Channel 1: duration = 0.1*tempo, Channel 2: 0.2*tempo, ..., Channel 10: 1.0*tempo
+            # Channel 1-9: turn off at staggered times, Channel 10: stays on until overridden
             for idx, ch in enumerate(order):
                 if idx == 9:
-                    # Last channel (10th) stays on longest
-                    duration = tempo * 2  # Extended for visual clarity
+                    # Last channel stays on until overridden
+                    duration = max_duration
                 else:
                     # Each channel duration increases by 0.1*tempo
                     duration = tempo * 0.1 * (idx + 1)
@@ -1056,6 +1110,10 @@ class SongEditor:
         # Update both current and start positions for sync
         self.playback_position = new_position
         self.playback_start_position = new_position
+        
+        # Update channel states for new position
+        self._update_channel_states()
+        self._update_channel_bar_lights()
         
         # Redraw timeline to show new position marker
         self._draw_timeline()
@@ -1668,6 +1726,10 @@ class SongEditor:
         self.update_id += 1  # Any loops with old ID will exit
         self.play_button.config(text="⏸ Pause", bg='#FF9800')
         
+        # Initialize channel states for playback start
+        self._update_channel_states()
+        self._update_channel_bar_lights()
+        
         # Load audio and start from current position
         pygame.mixer.music.load(self.mp3_path)
         pygame.mixer.music.play(start=self.playback_position)
@@ -1694,6 +1756,13 @@ class SongEditor:
         
         # Stop pygame mixer completely
         pygame.mixer.music.stop()
+        
+        # Reset channel states (all off when paused)
+        self.channel_states = [False] * 10
+        self.active_notes = []
+        self._update_channel_bar_lights()
+        self.active_notes = []
+        self._update_channel_bar_lights()
     
     def _rewind_playback(self):
         """Rewind to beginning of song, preserving playback state.
@@ -1710,6 +1779,10 @@ class SongEditor:
         # Reset position to start
         self.playback_position = 0
         self.playback_start_position = 0
+        
+        # Update channel states for start position (all off)
+        self._update_channel_states()
+        self._update_channel_bar_lights()
         
         # Refresh visualization and scroll to top
         self._draw_timeline()
@@ -1781,6 +1854,14 @@ class SongEditor:
             # Interpolate assuming real-time playback (1:1 ratio)
             self.playback_position = self.last_actual_position + time_elapsed
             
+            # Update flash pattern if in flash mode
+            if self.current_flash_mode > 0:
+                self._update_flash_pattern()
+            
+            # Update channel states and visual elements
+            self._update_channel_states()
+            self._update_channel_bar_lights()
+            
             # Update only playback line (much faster than full timeline redraw)
             self._update_playback_line()
             self._scroll_to_playback_position()
@@ -1814,6 +1895,10 @@ class SongEditor:
         minutes = int(self.playback_position // 60)
         seconds = self.playback_position % 60
         self.position_label.config(text=f"Position: {minutes}:{seconds:04.1f}")
+        
+        # Update channel states and visual indicators
+        self._update_channel_states()
+        self._update_channel_bar_lights()
     
     def _scroll_to_playback_position(self):
         """Scroll timeline to follow playback position."""
@@ -1859,6 +1944,376 @@ class SongEditor:
                 fake_event = FakeEvent(self.last_mouse_x, self.last_mouse_y)
                 # Trigger motion handler to update preview
                 self.root.after(10, lambda: self._canvas_motion(fake_event))
+    
+    def _find_next_override_time(self, beat_time: float, timing_info: Dict, channels: List[int]) -> float:
+        """Find when the specified channels get overridden by a later action.
+        
+        Args:
+            beat_time: Start time of the current action
+            timing_info: Segment/section dict with sequences
+            channels: List of channel numbers (0-9) to check
+            
+        Returns:
+            Time in seconds when channels are overridden, or beat_time + 1000 if never
+        """
+        start_time = timing_info.get('start_time', 0)
+        tempo = timing_info.get('tempo', 1.0)
+        total_beats = timing_info.get('total_beats', 0)
+        
+        override_time = beat_time + 1000  # Default to far future
+        
+        # Collect all future actions that could affect these channels
+        sequences = timing_info.get('sequences', [])
+        for sequence in sequences:
+            # Determine which beats this sequence applies to
+            beats_to_check = []
+            if 'beat' in sequence:
+                beats_to_check = [sequence['beat']]
+            elif 'beats' in sequence:
+                beats_to_check = sequence['beats']
+            elif sequence.get('all_beats'):
+                beats_to_check = list(range(1, total_beats + 1))
+            
+            # Check each beat
+            for beat in beats_to_check:
+                action_time = start_time + ((beat - 1) * tempo)
+                
+                # Only consider actions after current beat_time
+                if action_time <= beat_time:
+                    continue
+                
+                # Check if any action at this beat affects our channels
+                for action in sequence.get('actions', []):
+                    action_type = action.get('type')
+                    
+                    # These actions affect all channels
+                    if action_type in ['all_channels', 'step_up', 'step_down']:
+                        override_time = min(override_time, action_time)
+                        break
+                    
+                    # Note actions affect specific channels
+                    elif action_type == 'note':
+                        if action.get('channel') in channels:
+                            override_time = min(override_time, action_time)
+                    
+                    # Phrase actions affect specific channels
+                    elif action_type == 'phrase':
+                        phrase_id = str(action.get('id'))
+                        if 'phrases' in self.song_data:
+                            phrase = self.song_data['phrases'].get(phrase_id, {})
+                            for note in phrase.get('notes', []):
+                                if note.get('channel') in channels:
+                                    override_time = min(override_time, action_time)
+                                    break
+        
+        return override_time
+    
+    def _update_channel_states(self):
+        """Calculate which channels should be active at current playback position.
+        
+        This method traverses the song structure to determine which notes/actions
+        are currently playing based on the playback_position. Updates self.channel_states
+        and self.active_notes to track what's currently on.
+        
+        Also tracks flash_mode changes to apply random flashing to inactive channels.
+        """
+        if not self.song_data or not self.song_data.get('sections'):
+            return
+        
+        current_time = self.playback_position
+        new_states = [False] * 10
+        active_notes = []
+        
+        # Track the most recent flash mode (default -1 = all off unless explicitly set)
+        flash_mode = -1  # Start with all off
+        
+        # Iterate through all sections to find active notes and flash mode changes
+        for section in self.song_data['sections']:
+            # Handle sections with segments (varying tempo)
+            if 'segments' in section:
+                for segment in section['segments']:
+                    flash_mode = self._check_segment_for_active_channels(
+                        segment, current_time, new_states, active_notes, flash_mode
+                    )
+            # Handle sections with single timing
+            else:
+                flash_mode = self._check_segment_for_active_channels(
+                    section, current_time, new_states, active_notes, flash_mode
+                )
+        
+        # Update flash mode if changed
+        if flash_mode != self.current_flash_mode:
+            self.current_flash_mode = flash_mode
+            self._update_flash_pattern()  # Generate new random pattern
+        
+        # Apply flash mode to inactive channels
+        if self.current_flash_mode > 0:  # Mode 1, 2, or 3 (random flashing)
+            for ch in range(10):
+                if not new_states[ch]:  # Channel not active from song actions
+                    new_states[ch] = self.flash_channel_states[ch]
+        elif self.current_flash_mode == 0:  # Mode 0 (always on)
+            # Channels not explicitly controlled stay on
+            for ch in range(10):
+                if not new_states[ch]:
+                    new_states[ch] = True
+        # Mode -1 (all off) - inactive channels stay off (default)
+        
+        # Update channel states
+        self.channel_states = new_states
+        self.active_notes = active_notes
+    
+    def _check_segment_for_active_channels(self, segment: Dict, current_time: float, 
+                                           states: List[bool], active_notes: List, flash_mode: int = -1):
+        """Check a segment/section for notes active at current_time.
+        
+        Args:
+            segment: Section or segment dict with start_time, tempo, sequences
+            current_time: Current playback position in seconds
+            states: List of 10 booleans to update (channel active states)
+            active_notes: List to append (channel, end_time) tuples
+            flash_mode: Current flash mode from previous segments
+            
+        Returns:
+            Updated flash_mode value (if flash_mode actions encountered)
+        """
+        start_time = segment.get('start_time', 0)
+        tempo = segment.get('tempo', 1.0)
+        total_beats = segment.get('total_beats', 0)
+        
+        # Skip if current time is before this segment starts
+        if current_time < start_time:
+            return flash_mode
+        
+        # Collect all actions with their beat times for proper chronological ordering
+        # This is needed for step_up/step_down which can override each other
+        actions_with_times = []
+        
+        # Check all sequences in this segment
+        sequences = segment.get('sequences', [])
+        for sequence in sequences:
+            # Determine which beats this sequence applies to
+            beats_to_check = []
+            if 'beat' in sequence:
+                beats_to_check = [sequence['beat']]
+            elif 'beats' in sequence:
+                beats_to_check = sequence['beats']
+            elif sequence.get('all_beats'):
+                # For all_beats, check every beat from 1 to total_beats
+                beats_to_check = list(range(1, total_beats + 1))
+            
+            # Collect actions with their beat start times
+            for beat in beats_to_check:
+                beat_start_time = start_time + ((beat - 1) * tempo)
+                for action in sequence.get('actions', []):
+                    actions_with_times.append((beat_start_time, action))
+        
+        # Sort by time so we process chronologically
+        actions_with_times.sort(key=lambda x: x[0])
+        
+        # Track most recent activation for each channel: (start_time, end_time)
+        # Later actions override earlier ones
+        channel_activations = {}  # {channel: (start_time, end_time)}
+        
+        # Process actions chronologically, tracking flash_mode changes
+        for beat_start_time, action in actions_with_times:
+            if beat_start_time > current_time:
+                break  # No need to process future actions
+            
+            # Track flash_mode changes
+            if action.get('type') == 'flash_mode':
+                mode = action.get('mode', 0)
+                flash_mode = mode
+            
+            self._process_action_activation(
+                action, beat_start_time, current_time, tempo, channel_activations
+            )
+        
+        # Now determine which channels are currently active
+        for ch in range(10):
+            if ch in channel_activations:
+                # Check all activations for this channel
+                for start_time, end_time in channel_activations[ch]:
+                    if start_time <= current_time < end_time:
+                        states[ch] = True
+                        active_notes.append((ch, end_time))
+                        break  # Only need to mark as active once
+        
+        return flash_mode
+    
+    def _update_flash_pattern(self):
+        """Update flash channel states with seeded random pattern.
+        
+        Uses fixed seed combined with playback position to generate reproducible
+        "random" flash patterns that remain consistent across playback.
+        """
+        import random
+        
+        # Use fixed seed combined with time to generate reproducible pattern
+        # Quantize time to flash mode interval for stable patterns
+        if self.current_flash_mode == 1:  # Slow
+            interval = 0.5  # Update pattern every 0.5s
+        elif self.current_flash_mode == 2:  # Medium
+            interval = 0.3
+        elif self.current_flash_mode == 3:  # Fast
+            interval = 0.1
+        else:
+            return  # No flashing for modes 0 or -1
+        
+        # Quantize playback position to interval
+        time_slot = int(self.playback_position / interval)
+        seed = self.flash_random_seed + time_slot
+        
+        # Generate random pattern for each channel
+        random.seed(seed)
+        for ch in range(10):
+            self.flash_channel_states[ch] = random.random() > 0.5
+    
+    def _process_action_activation(self, action: Dict, beat_start_time: float,
+                                   current_time: float, tempo: float,
+                                   channel_activations: Dict):
+        """Process an action and update channel activations.
+        
+        For each action, we record all note activations. When an action is processed,
+        its beat_start_time determines override behavior - if a later action affects
+        the same channel, it will appear later in chronological order and override.
+        
+        Args:
+            action: Action dict
+            beat_start_time: When the beat starts (seconds)
+            current_time: Current playback position
+            tempo: Current tempo
+            channel_activations: Dict mapping channel to list of (start_time, end_time) tuples
+        """
+        action_type = action.get('type')
+        
+        if action_type == 'note':
+            channel = action.get('channel', 0)
+            delay = action.get('delay', 0)
+            duration = action.get('duration', 0.25)
+            
+            note_start = beat_start_time + delay
+            note_end = note_start + duration
+            
+            # Clear any existing activations for this channel from earlier actions
+            # (this simulates the hardware override behavior)
+            if channel not in channel_activations:
+                channel_activations[channel] = []
+            else:
+                # Keep only activations from this beat time or later
+                channel_activations[channel] = [
+                    (s, e) for s, e in channel_activations[channel]
+                    if s >= beat_start_time
+                ]
+            
+            channel_activations[channel].append((note_start, note_end))
+        
+        elif action_type == 'phrase':
+            phrase_id = str(action.get('id', ''))
+            if phrase_id in self.song_data.get('phrases', {}):
+                phrase = self.song_data['phrases'][phrase_id]
+                
+                # Collect all notes from this phrase
+                phrase_notes = []
+                for note in phrase.get('notes', []):
+                    channel = note.get('channel', 0)
+                    delay_mult = note.get('delay_multiplier', 0)
+                    duration_mult = note.get('duration_multiplier', 0.25)
+                    
+                    note_start = beat_start_time + (tempo * delay_mult)
+                    note_end = note_start + (tempo * duration_mult)
+                    phrase_notes.append((channel, note_start, note_end))
+                
+                # Group notes by channel to handle multiple notes per channel correctly
+                channels_in_phrase = set(ch for ch, _, _ in phrase_notes)
+                
+                # Clear activations from earlier actions for channels used in this phrase
+                for ch in channels_in_phrase:
+                    if ch not in channel_activations:
+                        channel_activations[ch] = []
+                    else:
+                        # Keep only activations from this beat time or later
+                        # (remove activations from earlier beat times that this action overrides)
+                        channel_activations[ch] = [
+                            (s, e) for s, e in channel_activations[ch]
+                            if s >= beat_start_time
+                        ]
+                
+                # Now add all phrase notes
+                for channel, note_start, note_end in phrase_notes:
+                    channel_activations[channel].append((note_start, note_end))
+        
+        elif action_type == 'all_channels':
+            duration = action.get('duration')
+            if duration is None:
+                duration_mult = action.get('duration_multiplier', 0.25)
+                duration = tempo * duration_mult
+            
+            for ch in range(10):
+                note_start = beat_start_time
+                note_end = note_start + duration
+                
+                if ch not in channel_activations:
+                    channel_activations[ch] = []
+                else:
+                    channel_activations[ch] = [
+                        (s, e) for s, e in channel_activations[ch]
+                        if s >= beat_start_time
+                    ]
+                
+                channel_activations[ch].append((note_start, note_end))
+        
+        elif action_type == 'step_up':
+            # step_up: Channels turn on sequentially, stay on indefinitely
+            # First channel blinks (duration=tempo), others stay on
+            order = [9, 8, 1, 6, 5, 3, 2, 4, 7, 0]
+            for x in range(10):
+                delay = tempo * 0.1 * x
+                note_start = beat_start_time + delay
+                
+                if x == 0:
+                    # First channel has finite duration
+                    duration = tempo
+                    note_end = note_start + duration
+                else:
+                    # Other channels stay on until overridden
+                    note_end = current_time + 1000
+                
+                ch = order[x]
+                if ch not in channel_activations:
+                    channel_activations[ch] = []
+                else:
+                    channel_activations[ch] = [
+                        (s, e) for s, e in channel_activations[ch]
+                        if s >= beat_start_time
+                    ]
+                
+                channel_activations[ch].append((note_start, note_end))
+        
+        elif action_type == 'step_down':
+            # step_down: All channels turn on, then turn off sequentially
+            order = [0, 7, 4, 2, 3, 5, 6, 1, 8, 9]
+            for x in range(10):
+                note_start = beat_start_time
+                
+                if x == 9:
+                    # Last channel stays on indefinitely
+                    note_end = current_time + 1000
+                else:
+                    # Other channels have increasing durations
+                    duration = tempo * 0.1 * (x + 1)
+                    note_end = note_start + duration
+                
+                ch = order[x]
+                if ch not in channel_activations:
+                    channel_activations[ch] = []
+                else:
+                    channel_activations[ch] = [
+                        (s, e) for s, e in channel_activations[ch]
+                        if s >= beat_start_time
+                    ]
+                
+                channel_activations[ch].append((note_start, note_end))
+    
     
     # ========== Zoom Controls ==========
     
