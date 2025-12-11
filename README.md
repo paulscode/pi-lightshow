@@ -24,7 +24,7 @@ A Christmas lightshow controller for Raspberry Pi with JSON-based song definitio
 ```
 pi-lightshow/
 ├── songs/                           # JSON song definitions and MP3 files
-│   ├── carol.json                   # Trans-Siberian Orchestra
+│   ├── carol.json                   # Trans-Siberian Carol of the Bells
 │   ├── madrussian.json              # Mad Russian's Christmas
 │   └── playlist.json                # Song playback order
 ├── src/
@@ -1061,6 +1061,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Trans-Siberian Orchestra for the amazing music
 - The Raspberry Pi Foundation
 - OMXPlayer developers
+- VLC developers
 - Everyone who creates Christmas light displays
 
 ---
