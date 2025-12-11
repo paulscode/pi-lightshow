@@ -23,7 +23,7 @@ A Christmas lightshow controller for Raspberry Pi with JSON-based song definitio
 
 ```
 pi-lightshow/
-├── songs/                           # JSON song definitions
+├── songs/                           # JSON song definitions and MP3 files
 │   ├── carol.json                   # Trans-Siberian Orchestra
 │   ├── madrussian.json              # Mad Russian's Christmas
 │   └── playlist.json                # Song playback order
@@ -39,7 +39,13 @@ pi-lightshow/
 ├── setup-dev.sh                     # Automated development setup
 ├── setup-pi.sh                      # Automated Raspberry Pi setup
 ├── setup-editor.sh                  # Song editor setup script
-└── README.md                        # This file
+├── start-editor.sh                  # Launch script for song editor
+├── requirements-editor.txt          # Python dependencies for editor
+├── config-example.json              # Example configuration file
+├── README.md                        # This file
+├── EDITOR.md                        # Song editor documentation
+├── LICENSE                          # MIT License
+└── .gitignore                       # Git ignore rules
 ```
 
 ## 🚀 Quick Start
@@ -262,9 +268,10 @@ python3 lightshow.py --simulate --songs-dir /path/to/songs
 
 ```
  10   9   2   7   6   4   3   5   8   1
-|------| |-----------| |-----| |-----|
-10+9     2+7+6         4+3     5+8     (1)
+|------| |---------| |-----| |-----|
 ```
+TODO: Add image of a real-world example
+
 
 ## 🎵 Creating Custom Songs
 
