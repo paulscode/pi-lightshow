@@ -3,6 +3,22 @@ Song Loader and Interpreter Module
 
 This module loads song definition JSON files and interprets them
 to generate lightshow commands for the channel controller.
+
+Key Components:
+- SongLoader: Loads and manages song JSON files from the songs directory
+- SongInterpreter: Schedules and executes beat-synchronized light sequences
+
+Song Structure:
+- Songs are defined in JSON files with sections, beats, and timing
+- Each section has a tempo (seconds per beat) and sequences of actions
+- Supports multi-section songs with different tempos (segments)
+- Actions include: notes, phrases, all_channels, step_up, step_down, flash_mode
+
+Threading Model:
+- Uses Threading.Timer for precise beat scheduling
+- Timers are created for each beat and delayed action
+- Periodic cleanup prevents thread exhaustion on resource-constrained systems
+- All timers are tracked for cleanup on song stop
 """
 
 import json
@@ -125,13 +141,21 @@ class SongInterpreter:
     Schedules beat-synchronized light actions using Threading.Timer.
     Supports multi-section songs with different tempos and segmented sections.
     
+    Timer Management:
+    - Each beat and action creates Threading.Timer objects for precise timing
+    - Timers are tracked in active_timers list for cleanup on stop
+    - Periodic cleanup (every 20 timers) removes completed timers to prevent
+      thread exhaustion on resource-constrained systems (e.g., Raspberry Pi)
+    
     Attributes:
         channels: List of channel objects (0-indexed, channels[0] = physical channel 1)
         player: Audio player providing playback position for synchronization
         song_data: Loaded song JSON (sections, phrases, timing)
-        active_timers: List of pending Timer objects (cancelled on stop)
+        active_timers: List of pending Timer objects (cancelled on stop, periodically cleaned)
         section_states: Dict tracking beat progress for each section/segment
         finished_callback: Optional callback when all sections complete
+        flash_mode_callback: Optional callback for flash mode changes
+        _timer_cleanup_counter: Counter to trigger periodic timer cleanup (prevents resource leak)
     """
     
     def __init__(self, channels: List[Any], player: Any):
@@ -510,12 +534,27 @@ class SongInterpreter:
         
         Prevents memory/resource leak by removing timers that have already executed.
         Called periodically during playback to keep the list size manageable.
+        
+        Timer.is_alive() returns False for timers that have completed execution,
+        allowing us to safely remove them and free the associated thread resources.
+        This is critical for long-running songs on Raspberry Pi where thread limits
+        can be reached (typically ~380 threads on Pi 3).
         """
         # Filter out timers that are no longer alive (finished executing)
         self.active_timers = [t for t in self.active_timers if t.is_alive()]
     
     def _add_timer(self, timer):
         """Add a timer and periodically cleanup finished ones.
+        
+        This method prevents thread exhaustion on resource-constrained systems
+        by removing completed timers from the active list every 20 additions.
+        
+        Why this matters:
+        - Each Timer creates a system thread
+        - Raspberry Pi 3 has limited thread resources
+        - Long songs can create hundreds of timers
+        - Completed timers stay in memory until explicitly removed
+        - Without cleanup, system runs out of threads (RuntimeError: can't start new thread)
         
         Args:
             timer: Timer object to add to active list

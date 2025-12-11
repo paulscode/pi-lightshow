@@ -1,8 +1,27 @@
 """
-Hardware Abstraction Layer for Channels
+Hardware Abstraction Layer for Channels and Buttons
 
-This module provides an abstraction for controlling channels,
+This module provides abstraction for controlling light channels and buttons,
 with implementations for both Raspberry Pi GPIO and simulation.
+
+Components:
+- ChannelInterface: Abstract base for light channel control
+  - RPiChannel: Raspberry Pi GPIO implementation
+  - SimulatedChannel: In-memory simulation with callbacks
+  
+- ButtonInterface: Abstract base for button input
+  - RPiButton: Raspberry Pi GPIO with event detection
+  - SimulatedButton: Programmatic button simulation
+
+Factory Functions:
+- create_channels(): Creates 10 channel objects (hardware or simulated)
+- create_buttons(): Creates 3 button objects (Power, Mode, Lightshow)
+- setup_gpio(): Initializes GPIO in BCM mode (hardware only)
+- cleanup_gpio(): Releases GPIO resources (hardware only)
+
+GPIO Pin Mappings:
+- Channels: [17, 27, 22, 13, 19, 26, 21, 20, 16, 12] (BCM mode)
+- Buttons: [25=Power, 24=Mode, 23=Lightshow] (BCM mode)
 """
 
 from abc import ABC, abstractmethod

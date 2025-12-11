@@ -3,7 +3,24 @@
 Pi Lightshow Main Application
 
 Christmas lightshow controller using JSON-based song definitions and hardware abstraction.
-Supports both Raspberry Pi GPIO control and GUI simulation for development.
+
+Features:
+- Hardware control via Raspberry Pi GPIO or GUI simulation for development
+- Audio playback via VLC (modern systems) or OMXPlayer (legacy Buster)
+- Beat-synchronized light sequences with multi-tempo support
+- Interactive button controls (Power, Mode, Lightshow)
+- Multiple flash modes (always on, slow/medium/fast random flashing)
+- Automatic playlist advancement with integration API support
+
+Supported Platforms:
+- Raspberry Pi (all versions): Hardware GPIO control
+  - Buster (legacy): OMXPlayer preferred, VLC fallback
+  - Bookworm/Trixie (modern): VLC (OMXPlayer not available)
+- Development systems (Linux/Mac/Windows): GUI simulator with VLC audio
+
+Usage:
+  Hardware mode:  python3 lightshow.py
+  Simulator mode: python3 lightshow.py --simulate
 """
 
 import sys
@@ -97,8 +114,8 @@ class LightshowController:
         self.previous_light_mode = 1  # Mode to restore after lightshow completes
         self.auto_play = False  # Whether to automatically advance to next song after current finishes
         self.debounce = False  # Button debounce flag to prevent multiple rapid presses
-        self.player = None  # Current audio player instance (VLC, OMXPlayer, or simulated)
-        self.interpreter = None  # Current song interpreter instance (executes lightshow sequences)
+        self.player = None  # Current audio player instance (VLC on modern systems, OMXPlayer on Buster, or simulated)
+        self.interpreter = None  # Current song interpreter instance (schedules and executes beat-synchronized lightshow sequences)
         self.current_song_id = None  # ID of currently playing song
         
         # Song loader - reads JSON files from songs directory
@@ -261,9 +278,11 @@ class LightshowController:
             print(f"WARNING: MP3 file not found: {mp3_path}")
             print("Lightshow will run with timing simulation only (no audio)")
         
-        # Use simulated player only if MP3 doesn't exist
-        # When --simulate flag is used with existing MP3, try VLC for audio
-        # (SimulatedPlayer uses internal timing, VLCPlayer synchronizes to audio)
+        # Player selection logic:
+        # - If MP3 missing: Always use SimulatedPlayer (timing only, no audio)
+        # - If MP3 exists and --simulate flag: VLC with GUI (audio + visual)
+        # - If MP3 exists on real Pi: Hardware player (OMXPlayer on Buster, VLC on newer)
+        # Note: create_player() handles platform detection and fallback logic
         use_simulated = not mp3_exists
         
         self.player = create_player(

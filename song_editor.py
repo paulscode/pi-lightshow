@@ -2988,7 +2988,7 @@ DOCUMENTATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Complete documentation available in:
-• EDITOR_README.md - Full feature documentation
+• EDITOR.md - Full feature documentation
 • Example files: songs/carol.json, songs/madrussian.json
 
 
@@ -3023,7 +3023,7 @@ Groups indicate physically close channels.
                            "• Comprehensive JSON format support\n"
                            "• Real-time playback preview\n"
                            "• Phrase library for reusable patterns\n\n"
-                           "See EDITOR_README.md for complete documentation.")
+                           "See EDITOR.md for complete documentation.")
     
     def run(self):
         """Run the editor application."""

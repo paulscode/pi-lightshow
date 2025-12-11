@@ -278,7 +278,7 @@ The timeline provides a rich visual representation of your choreography with ext
 
 - **Help → Quick Start** - Comprehensive quick start guide with workflow, shortcuts, and tips
 - **Help → About** - Version and feature information
-- **EDITOR_README.md** - Complete documentation (this file)
+- **EDITOR.md** - Complete documentation (this file)
 - **Example files** - songs/carol.json and songs/madrussian.json for reference
 
 ## Tutorial: Creating Your First Lightshow

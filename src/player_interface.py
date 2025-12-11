@@ -1,11 +1,17 @@
-"""<br/>Audio Player Abstraction
+"""Audio Player Abstraction
 
 Provides implementations for audio playback on different platforms:
-- OMXPlayerWrapper: Hardware-accelerated playback on Raspberry Pi
-- VLCPlayer: Cross-platform playback for development (with wall-clock timing)
+- OMXPlayerWrapper: Hardware-accelerated playback on Raspberry Pi (Buster only, deprecated)
+- VLCPlayer: Modern cross-platform playback (Raspberry Pi Bookworm/Trixie and development systems)
 - SimulatedPlayer: Timing simulation without audio (for testing without MP3)
 
 All players implement PlayerInterface for consistent API.
+
+Player Selection Logic:
+1. If simulated=True: Use SimulatedPlayer
+2. If Raspberry Pi detected: Try OMXPlayer first (for Buster compatibility), fall back to VLC
+3. Otherwise: Use VLC for development systems
+4. Final fallback: SimulatedPlayer if no audio player available
 """
 
 from abc import ABC, abstractmethod
@@ -40,10 +46,14 @@ class PlayerInterface(ABC):
 
 
 class OMXPlayerWrapper(PlayerInterface):
-    """Wrapper for OMXPlayer on Raspberry Pi.
+    """Wrapper for OMXPlayer on Raspberry Pi (deprecated).
     
-    OMXPlayer is hardware-accelerated audio player optimized for Raspberry Pi.
+    OMXPlayer is a hardware-accelerated audio player optimized for Raspberry Pi.
+    Only available on Raspbian Buster (legacy). For newer Raspberry Pi OS versions
+    (Bookworm, Trixie, etc.), use VLCPlayer instead.
+    
     Runs in separate thread and provides callbacks for sync and completion.
+    Requires: omxplayer binary and omxplayer-wrapper Python package
     """
     
     def __init__(self, path: str, end_callback: Optional[Callable] = None, 
@@ -202,7 +212,11 @@ class SimulatedPlayer(PlayerInterface):
 
 
 class VLCPlayer(PlayerInterface):
-    """VLC-based player for development on Linux.
+    """VLC-based player for modern Raspberry Pi OS and development systems.
+    
+    Recommended player for:
+    - Raspberry Pi OS Bookworm, Trixie, and newer (replaces deprecated OMXPlayer)
+    - Development systems (Linux, Mac, Windows)
     
     Uses wall-clock timing instead of VLC's get_time() for better accuracy.
     
@@ -213,6 +227,7 @@ class VLCPlayer(PlayerInterface):
     - This approach gives near-zero timing error from first beat
     
     Falls back to SimulatedPlayer if python-vlc is not installed.
+    Requires: vlc binary and python3-vlc (or python-vlc) package
     """
     
     def __init__(self, path: str, end_callback: Optional[Callable] = None,
@@ -349,9 +364,19 @@ def create_player(path: str, end_callback: Optional[Callable] = None,
     Create an appropriate player based on the environment.
     
     Factory function that selects the best player for the current platform:
-    - Simulated: If simulated=True or MP3 doesn't exist
-    - OMXPlayerWrapper: If running on Raspberry Pi (hardware-accelerated)
-    - VLCPlayer: On other systems (Linux, Mac, Windows)
+    
+    Selection Logic:
+    1. If simulated=True: Returns SimulatedPlayer (no audio, timing simulation only)
+    2. If Raspberry Pi detected:
+       a. Try OMXPlayer first (for Buster compatibility)
+       b. If OMXPlayer unavailable, fall back to VLC (for Bookworm/Trixie)
+    3. If not Raspberry Pi: Try VLC (development systems)
+    4. Final fallback: SimulatedPlayer if all audio players fail
+    
+    Platform Support:
+    - Raspberry Pi (Buster): OMXPlayer preferred, VLC fallback
+    - Raspberry Pi (Bookworm/Trixie): VLC (OMXPlayer not available)
+    - Linux/Mac/Windows: VLC
     
     Args:
         path: Path to audio file (MP3, WAV, etc.)

@@ -2,6 +2,11 @@
 
 A Christmas lightshow controller for Raspberry Pi with JSON-based song definitions and development simulator.
 
+**Platform Support:**
+- ✅ Raspberry Pi (all versions) - Buster (OMXPlayer), Bookworm/Trixie (VLC)
+- ✅ Linux development systems (Ubuntu, Mint, etc.)
+- ✅ Simulator mode on any platform with Python 3 and Tkinter
+
 ## 🎄 Features
 
 - **10-channel light control** via GPIO or simulated display
@@ -11,6 +16,8 @@ A Christmas lightshow controller for Raspberry Pi with JSON-based song definitio
 - **Multiple operating modes**: Always on, slow/medium/fast random flashing, music lightshow
 - **Button controls**: Power, Mode cycling, Lightshow start
 - **Optional API integration** for external triggers
+- **Cross-platform audio**: VLC support for modern Raspberry Pi OS (Bookworm/Trixie) and development systems
+- **Resource-efficient**: Automatic thread cleanup prevents exhaustion on Raspberry Pi
 
 ## 📁 Project Structure
 
@@ -30,6 +37,7 @@ pi-lightshow/
 ├── lightshow.py                     # Main application
 ├── song_editor.py                   # Visual song editor (dev only)
 ├── setup-dev.sh                     # Automated development setup
+├── setup-pi.sh                      # Automated Raspberry Pi setup
 ├── setup-editor.sh                  # Song editor setup script
 └── README.md                        # This file
 ```
@@ -94,23 +102,47 @@ This will open a GUI showing the 10 channels arranged as they would be physicall
 
 ### Raspberry Pi Setup
 
-**IMPORTANT:** Currently requires Raspbian Buster (legacy) due to OMXPlayer dependency.
+**Automated Setup (Recommended):**
 
-1. **Install system packages:**
+The automated setup script detects your Raspberry Pi OS version and installs the appropriate audio player:
+
+```bash
+cd ~/pi-lightshow
+./setup-pi.sh
+```
+
+The script will:
+- Detect your Raspberry Pi OS version (Buster, Bookworm, Trixie, etc.)
+- Install OMXPlayer on Buster (legacy)
+- Install VLC on Bookworm/Trixie (modern)
+- Install all required Python dependencies
+- Verify installations
+
+**Manual Setup:**
+
+<details>
+<summary>Click to expand manual installation instructions</summary>
+
+**For Raspberry Pi OS Buster (Legacy):**
 
 ```bash
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install git omxplayer python3-pip
+sudo apt-get install git omxplayer python3-pip python3-dbus
+pip3 install --user omxplayer-wrapper
 ```
 
-2. **Install Python packages:**
+**For Raspberry Pi OS Bookworm/Trixie (Modern):**
 
 ```bash
-pip3 install --user dbus-python omxplayer-wrapper
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install git vlc python3-vlc
 ```
 
-3. **Clone repository:**
+</details>
+
+3. **Clone repository (if not already cloned):**
 
 ```bash
 cd ~
@@ -242,7 +274,7 @@ Songs can be created in two ways:
 
 ### Using the Song Editor (Recommended)
 
-The visual song editor provides a timeline-based interface for choreographing light shows. See [EDITOR_README.md](EDITOR_README.md) for complete documentation.
+The visual song editor provides a timeline-based interface for choreographing light shows. See [EDITOR.md](EDITOR.md) for complete documentation.
 
 **Quick Start:**
 
@@ -302,11 +334,16 @@ The system uses different audio players depending on the environment:
 
 | Environment | Player | Notes |
 |------------|--------|-------|
-| Raspberry Pi | OMXPlayer | Hardware-accelerated, low latency |
+| Raspberry Pi (Buster) | OMXPlayer | Hardware-accelerated, low latency (legacy) |
+| Raspberry Pi (Bookworm/Trixie) | VLC | Modern replacement for OMXPlayer |
 | Linux Mint/Ubuntu | VLC | Wall-clock timing (0.1s startup delay) |
 | Simulated | Time-based | No actual audio, timing simulation |
 
+**Platform Detection:** The system automatically detects if it's running on a Raspberry Pi and selects the appropriate player. On Buster, it tries OMXPlayer first and falls back to VLC if unavailable. On newer OS versions, it uses VLC directly.
+
 **Timing Approach:** VLC uses wall-clock timing (`time.time() - playback_start_time`) instead of `vlc.get_time()` because VLC's internal timer lags 0.5-0.9s behind actual audio playback. After VLC reports `is_playing()`, the system waits an additional 0.1s for audio device initialization before recording the start time. This approach delivers near-zero timing error from the first beat.
+
+**Thread Management:** The system uses Threading.Timer for beat-synchronized actions. On resource-constrained systems (like Raspberry Pi 3), completed timers are automatically cleaned up every 20 timer creations to prevent thread exhaustion. This allows long songs to play without hitting system thread limits (~380 threads on Pi 3).
 
 **Important:** All song JSON files should use timing calibrated to actual audio playback, not VLC's position API. The wall-clock compensation happens automatically in the player interface.
 
@@ -965,6 +1002,18 @@ python3 lightshow.py --simulate --songs-dir /path/to/songs
 - Use Audacity to visualize beats and measure timestamps
 - Adjust `start_time` and `tempo` values in JSON
 
+**"RuntimeError: can't start new thread" on Raspberry Pi:**
+- This occurs when the system runs out of thread resources
+- Fixed in v2.1.1+ with automatic timer cleanup
+- Ensure you're running the latest version
+- If issue persists, the system may be resource-constrained
+
+**"python-vlc not found" error on modern Raspberry Pi:**
+- Newer Raspberry Pi OS (Bookworm/Trixie) requires VLC instead of OMXPlayer
+- Install with: `sudo apt-get install vlc python3-vlc`
+- Or run the automated setup: `./setup-pi.sh`
+- The system will automatically use VLC on modern OS versions
+
 ## 📝 Architecture Overview
 
 This lightshow uses a modular, JSON-based architecture for easy customization:
@@ -986,9 +1035,9 @@ This lightshow uses a modular, JSON-based architecture for easy customization:
 
 Contributions welcome! Areas for improvement:
 
-- [ ] Support for newer Raspbian with alternative to OMXPlayer
+- [x] Support for newer Raspbian with alternative to OMXPlayer (✓ Complete - VLC support added)
 - [ ] Web interface for remote control
-- [x] Song editor GUI (✓ Complete - see EDITOR_README.md)
+- [x] Song editor GUI (✓ Complete - see EDITOR.md)
 - [ ] More song definitions
 - [ ] MQTT integration
 - [ ] Sound-reactive mode

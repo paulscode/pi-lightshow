@@ -1,8 +1,25 @@
 """
 Graphical Simulator for Pi Lightshow Development
 
-This module provides a GUI for simulating the 10-channel lightshow
+This module provides a tkinter-based GUI for simulating the 10-channel lightshow
 and button controls on a development machine without Raspberry Pi hardware.
+
+Features:
+- Visual representation of all 10 light channels with accurate physical layout
+- Three interactive buttons (Power, Mode, Lightshow)
+- Real-time channel state updates synchronized with song playback
+- Status display showing current mode, song, and system state
+- Clean dark theme matching the Christmas light aesthetic
+
+Layout:
+- Channels arranged to match physical installation: 10-9  2-7-6  4-3  5-8  1
+- Channels light up in colors (green=on, dark=off) matching real behavior
+- Status bar shows current light mode and playback information
+
+Usage:
+- Run lightshow.py with --simulate flag
+- Click buttons to control the system as you would on hardware
+- Window must remain open for simulation to continue
 """
 
 import tkinter as tk
